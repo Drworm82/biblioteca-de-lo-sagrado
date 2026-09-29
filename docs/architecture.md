@@ -2,84 +2,218 @@
 
 ## Objetivo
 
-Construir una biblioteca digital comparada que pueda crecer desde un corpus pequeño hasta un repositorio extenso de textos, manuscritos, traducciones, lugares, personas, conceptos y relaciones históricas sin tener que rediseñar el modelo fundamental.
+Construir una biblioteca digital comparada de textos sagrados y religiosos que pueda crecer desde un corpus pequeño hasta un repositorio extenso de textos, manuscritos, traducciones, fuentes, lugares, personas, conceptos y relaciones históricas.
+
+La arquitectura debe preservar la independencia entre:
+
+- datos;
+- dominio histórico/filológico;
+- contenido editorial;
+- interfaz;
+- infraestructura.
 
 ## Principios
 
 1. Los datos están separados de la interfaz.
-2. Las entidades tienen identidad estable.
+2. Las entidades tienen identificadores estables.
 3. Las relaciones son explícitas y tipadas.
-4. La incertidumbre histórica se conserva en los datos.
+4. La incertidumbre histórica se conserva.
 5. La procedencia de la información es trazable.
-6. Los textos, manuscritos, ediciones y traducciones no se confunden entre sí.
+6. Work, TextualWitness, Manuscript, Edition y Translation nunca se confunden.
 7. La geografía es transversal.
-8. La evidencia y la interpretación son capas diferentes.
-9. El contenido editorial debe poder versionarse.
-10. La interfaz debe poder evolucionar sin migrar el corpus.
+8. Evidence, Claim, Interpretation y Hypothesis son capas distintas.
+9. El contenido editorial puede versionarse.
+10. Las contribuciones externas requieren revisión antes de publicación.
+11. La interfaz no debe convertirse en la fuente de verdad del dato.
+12. El modelo debe poder evolucionar sin rehacer el corpus.
 
-## Arquitectura prevista
+## Arquitectura de dominio
 
-Frontend y backend iniciales:
+### Registro de entidades
+
+Un Entity Registry proporciona identidad estable para las entidades que participan en el grafo.
+
+Las tablas de dominio conservan los atributos específicos.
+
+### Biblioteca
+
+Capa principal:
+
+- Tradition
+- Work
+- TextualWitness
+- Manuscript
+- Edition
+- Translation
+- TextualUnit
+- TextualVariant
+- Language
+- Script
+
+### Contexto
+
+- Person
+- PersonWorkRole
+- Place
+- PlaceName
+- Period
+- DatingAssertion
+- Source
+- SourceLocation
+- Evidence
+- Claim
+- Interpretation
+- Hypothesis
+- Concept
+
+### Atlas y relaciones
+
+- Relations
+- lugares;
+- regiones históricas;
+- rutas;
+- circulación;
+- contactos;
+- influencias;
+- reinterpretaciones;
+- sincretismos;
+- cronología.
+
+Toda relación histórica importante debe poder enlazar con fuentes y evidencia.
+
+## Flujo conceptual
+
+`Fuente → dato estructurado → modelo de dominio → consulta/API → interfaz`
+
+Para afirmaciones interpretativas:
+
+`Fuente → Evidence → Claim → Interpretation/Hypothesis → consulta/API → interfaz`
+
+Para contenido colaborativo:
+
+`Usuario → Contribution → Review → Revision → Publication`
+
+## Arquitectura de contenido colaborativo
+
+El contenido publicado no debe editarse directamente por usuarios externos.
+
+Flujo:
+
+`Usuario registrado`
+→ `propuesta`
+→ `revisión`
+→ `aprobación`
+→ `revisión publicada`
+
+La aplicación debe conservar el historial completo.
+
+Inicialmente:
+
+- usuarios registrados pueden proponer;
+- colaboradores pueden aportar contenido;
+- editores pueden revisar;
+- administrador puede aprobar.
+
+La autorización debe ser una capacidad del dominio, no una decisión exclusiva de la interfaz.
+
+## Capas de aplicación
+
+### Biblioteca
+
+Consulta y lectura de:
+
+- obras;
+- testimonios;
+- manuscritos;
+- ediciones;
+- traducciones;
+- unidades textuales.
+
+### Contexto
+
+Consulta de:
+
+- personas;
+- lugares;
+- períodos;
+- fuentes;
+- evidencia;
+- afirmaciones;
+- interpretaciones.
+
+### Atlas / Relaciones
+
+Consulta de:
+
+- mapas;
+- líneas temporales;
+- grafos;
+- relaciones entre entidades;
+- circulación;
+- contactos;
+- posibles influencias.
+
+### Editorial
+
+Gestión de:
+
+- contribuciones;
+- revisiones;
+- revisores;
+- decisiones;
+- publicaciones;
+- historial.
+
+## Stack previsto
+
+Frontend y backend inicial:
 
 - Next.js
 - TypeScript
 - React
+- Tailwind CSS
+
+Persistencia:
+
 - PostgreSQL
 - Drizzle ORM
-- Tailwind CSS
 
 Infraestructura prevista:
 
-- GitHub para código y contenido versionable.
-- PostgreSQL para relaciones y consultas.
-- Vercel para despliegue de la aplicación.
-- Almacenamiento de objetos para imágenes y archivos voluminosos.
+- GitHub
+- Vercel
+- almacenamiento de objetos para imágenes, facsímiles y archivos voluminosos.
 
-No se introducen microservicios en la primera fase. La aplicación será un monolito modular con límites claros entre dominios.
+No introducir microservicios en la primera fase. La aplicación será un monolito modular con límites claros entre dominios.
 
-## Capas
+## Regla de evolución
 
-### 1. Biblioteca
+No implementar una capacidad solamente porque puede resultar útil en el futuro.
 
-Es la capa principal:
+Primero se modelan los límites que sabemos que necesitaremos; después se activan las capacidades cuando exista una necesidad real.
 
-- tradiciones
-- obras
-- expresiones textuales
-- manuscritos
-- ediciones
-- traducciones
-- variantes
+Ejemplos:
 
-### 2. Contexto
+- PostGIS cuando las consultas geográficas lo requieran.
+- variantes textuales avanzadas cuando exista un corpus que las necesite.
+- búsqueda especializada cuando el volumen lo justifique.
+- almacenamiento documental/facsímil cuando el corpus lo requiera.
 
-- periodos históricos
-- personas
-- acontecimientos
-- notas filológicas
-- arqueología
-- fuentes académicas
+## Regla editorial
 
-### 3. Atlas y relaciones
+La interfaz nunca debe presentar una hipótesis como un hecho simplemente porque sea la interpretación más visible.
 
-- lugares
-- regiones históricas
-- rutas
-- circulación
-- relaciones entre entidades
-- grafos
-- comparación de motivos
+La UI debe conservar las diferencias entre:
 
-## Regla de dependencia
+- evidencia;
+- afirmación;
+- interpretación;
+- hipótesis;
+- tradición religiosa;
+- afirmación popular no demostrada.
 
-La interfaz nunca debe ser la fuente de verdad de un dato histórico.
+## Principio rector
 
-El flujo conceptual es:
+> Primero el texto; después su contexto; finalmente sus relaciones.
 
-Fuente → dato estructurado → modelo de dominio → API/consulta → interfaz.
-
-## Evolución
-
-La arquitectura se implementará incrementalmente. Se diseñarán desde ahora los límites que necesitaremos después, pero solo se activarán las capacidades cuando exista una necesidad real.
-
-Ejemplo: el modelo soportará variantes manuscritas antes de que exista un módulo completo de crítica textual.
+La arquitectura técnica existe para conservar esa distinción, no para ocultarla.

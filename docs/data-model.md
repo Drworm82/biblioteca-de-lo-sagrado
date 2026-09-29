@@ -1,93 +1,486 @@
-# Modelo de datos
+# Modelo de datos v2
 
-## Entidades principales
+## Objetivo
+
+El modelo debe representar una biblioteca digital comparada de textos sagrados y religiosos, junto con sus testigos textuales, manuscritos, ediciones, traducciones, fuentes, personas, lugares, conceptos y relaciones.
+
+El modelo debe conservar la incertidumbre histórica y distinguir estrictamente entre evidencia, afirmaciones documentadas, interpretaciones e hipótesis.
+
+Principio central:
+
+> La biblioteca registra primero la evidencia; después las interpretaciones; finalmente las relaciones y reconstrucciones.
+
+La biblioteca no establece un canon religioso ni presupone que una tradición sea verdadera, falsa, original o derivada de otra.
+
+---
+
+## 1. Registro de entidades
+
+Todas las entidades relevantes reciben un identificador estable independiente de su nombre visible.
+
+### Entity
+
+Registro transversal para identificar entidades que pueden participar en el grafo.
+
+Campos conceptuales:
+
+- id
+- entity_type
+- stable_key
+- created_at
+- updated_at
+
+El registro no sustituye las tablas de dominio. Sirve como identidad común para relaciones, afirmaciones y consultas.
+
+---
+
+## 2. Tradición
 
 ### Tradition
 
-Tradición religiosa, cultural o textual. No equivale necesariamente a una religión institucional moderna.
+Tradición religiosa, cultural, textual o histórica.
+
+No debe confundirse automáticamente con una religión institucional moderna.
+
+Puede representar, por ejemplo:
+
+- una tradición mesopotámica;
+- una tradición textual;
+- una tradición budista;
+- una tradición cristiana oriental;
+- una tradición ritual local.
+
+Las categorías más específicas deben conservarse como metadatos o relaciones, no imponerse en la identidad básica.
+
+---
+
+## 3. Obras y transmisión textual
 
 ### Work
 
-Obra identificable como unidad textual o corpus.
+Obra o unidad textual identificable como composición, corpus o texto.
+
+Ejemplos:
+
+- Génesis
+- Evangelio de Tomás
+- Epopeya de Gilgamesh
+- Himno a Inanna
+
+Una obra no equivale a un manuscrito concreto.
 
 ### TextualWitness
 
-Testimonio textual concreto, incluyendo manuscrito o testimonio transmitido cuando sea necesario.
+Testimonio textual concreto de una obra o tradición textual.
+
+Puede ser:
+
+- manuscrito;
+- fragmento;
+- inscripción;
+- cita antigua;
+- traducción antigua;
+- otro testimonio textual identificable.
+
+Un testimonio textual no tiene que ser necesariamente un manuscrito físico.
 
 ### Manuscript
 
-Objeto manuscrito físico o conjunto manuscrito identificable.
+Objeto o conjunto físico que conserva uno o varios testimonios.
+
+La distinción fundamental es:
+
+> Manuscript = soporte físico.
+>
+> TextualWitness = evidencia textual conservada.
+
+Un manuscrito puede contener varias obras o testimonios.
 
 ### Edition
 
-Edición académica o editorial de un testimonio/texto.
+Edición editorial de una obra o conjunto de testimonios.
+
+Puede ser:
+
+- edición diplomática;
+- edición crítica;
+- edición facsimilar;
+- edición académica;
+- edición popular.
 
 ### Translation
 
-Traducción identificable a partir de una obra, testimonio o edición.
+Traducción identificable de una obra, testimonio o edición.
+
+Una traducción puede basarse en múltiples fuentes.
+
+### TranslationSource
+
+Relación entre una traducción y sus fuentes de base.
+
+Debe permitir múltiples:
+
+- manuscritos;
+- testimonios;
+- ediciones;
+- textos críticos;
+- traducciones anteriores.
+
+Esto evita asumir que toda traducción procede de un único testimonio.
+
+### TextualUnit
+
+Unidad estructural de un texto.
+
+No debe estar diseñada específicamente para la Biblia.
+
+Puede representar:
+
+- libro;
+- capítulo;
+- verso;
+- línea;
+- logion;
+- canto;
+- sección;
+- inscripción;
+- párrafo;
+- otra unidad pertinente.
+
+Debe poder formar jerarquías mediante `parent_id`.
+
+Ejemplos:
+
+`Biblia → Libro → Capítulo → Versículo`
+
+`Evangelio de Tomás → Logion`
+
+`Inscripción → Línea`
+
+### TextualVariant
+
+Modelo futuro para registrar lecturas variantes entre testimonios.
+
+Ejemplo conceptual:
+
+`Unidad textual → Testimonio A → lectura A`
+`Unidad textual → Testimonio B → lectura B`
+
+La implementación puede incorporarse después, pero el modelo no debe impedirla.
+
+---
+
+## 4. Lenguas y escritura
 
 ### Language
 
-Lengua del texto, manuscrito, edición o traducción.
+Lengua utilizada por una obra, testimonio, edición o traducción.
 
-### Person
+### Script
 
-Autor, atribuido, traductor, escriba, descubridor, investigador u otra persona relevante.
+Sistema de escritura utilizado para representar una lengua.
 
-### Place
-
-Lugar geográfico. Debe poder distinguirse entre nombre histórico y nombre moderno.
-
-### Period
-
-Periodo histórico o rango cronológico.
-
-### Source
-
-Fuente bibliográfica, arqueológica, epigráfica, manuscrita, institucional o académica.
-
-### Claim
-
-Afirmación concreta que puede vincularse a una o más fuentes.
-
-### Relation
-
-Relación entre dos entidades, con tipo, evidencia y grado de confianza.
-
-### Concept
-
-Concepto, motivo o tema que puede aparecer en varias tradiciones.
-
-## Identificadores
-
-Cada entidad tendrá un identificador estable e independiente de su nombre visible.
+Language y Script son entidades diferentes.
 
 Ejemplo:
 
-`work-genesis`
+Una misma lengua puede aparecer en diferentes sistemas de escritura y un sistema de escritura puede utilizarse para diferentes lenguas.
 
-El nombre mostrado puede cambiar sin romper las relaciones internas.
+También deben poder registrarse:
 
-## Cronología
+- transliteración;
+- normalización;
+- nombre original;
+- variantes ortográficas.
 
-No se debe almacenar una única fecha numérica cuando la evidencia proporciona un rango.
+---
 
-Modelo conceptual:
+## 5. Personas y roles
 
+### Person
+
+Persona histórica, tradicional o relevante para la transmisión.
+
+No usar `works.author_id`.
+
+### PersonWorkRole
+
+Relaciona una persona con una obra o manifestación mediante un papel explícito.
+
+Roles posibles:
+
+- author
+- attributed_author
+- traditional_attribution
+- compiler
+- redactor
+- translator
+- scribe
+- editor
+- commentator
+- discoverer
+- researcher
+- other
+
+Las discrepancias sobre autoría se representan mediante Claims y fuentes, no mediante una falsa certeza en Work.
+
+---
+
+## 6. Geografía
+
+### Place
+
+Lugar geográfico histórico o contemporáneo.
+
+Puede representar:
+
+- ciudad;
+- región;
+- país histórico;
+- asentamiento;
+- sitio arqueológico;
+- cueva;
+- montaña;
+- río;
+- isla;
+- templo;
+- santuario;
+- lugar de hallazgo;
+- otro lugar pertinente.
+
+No limitar Place a un simple punto geográfico.
+
+### PlaceName
+
+Nombre de un lugar, con posibilidad de registrar:
+
+- nombre;
+- lengua;
+- período de uso;
+- tipo;
+- nombre histórico;
+- nombre moderno;
+- fuente.
+
+Una frontera moderna no debe asumirse automáticamente como una frontera histórica.
+
+Las geometrías complejas y PostGIS pueden incorporarse posteriormente.
+
+---
+
+## 7. Cronología
+
+### Period
+
+Período histórico o rango cronológico.
+
+No representa necesariamente una fecha exacta.
+
+### DatingAssertion
+
+Propuesta de datación aplicada a una entidad.
+
+Debe permitir múltiples propuestas simultáneas:
+
+- entity_id
 - earliest
 - latest
 - preferred
 - precision
 - dating_method
 - source_ids
+- confidence
+- notes
 
-Las fechas BCE se representan internamente con una convención única y se formatean en la interfaz.
+Una fecha publicada por un investigador no debe convertirse automáticamente en la única fecha verdadera del registro.
 
-## Relaciones
+Ejemplo:
 
-Una relación no significa automáticamente influencia.
+Una obra puede tener tres propuestas académicas de datación, cada una con sus fuentes y grado de confianza.
 
-Tipos iniciales:
+---
+
+## 8. Fuentes
+
+### Source
+
+Fuente bibliográfica, arqueológica, epigráfica, manuscrita, institucional o académica.
+
+### SourceLocation
+
+Localización precisa dentro de una fuente.
+
+Puede contener:
+
+- página;
+- volumen;
+- capítulo;
+- sección;
+- párrafo;
+- línea;
+- figura;
+- tabla;
+- URL;
+- DOI;
+- identificador externo;
+- locator_text.
+
+Una afirmación importante debe poder señalar exactamente dónde se encuentra el respaldo.
+
+---
+
+## 9. Evidencia, afirmaciones e interpretación
+
+Este es uno de los componentes centrales del proyecto.
+
+### Evidence
+
+Registro de evidencia observable o documentada.
+
+Puede ser:
+
+- arqueológica;
+- textual;
+- lingüística;
+- epigráfica;
+- paleográfica;
+- histórica;
+- geográfica;
+- antropológica;
+- científica;
+- material.
+
+Evidence debe describir aquello que puede respaldarse directamente.
+
+Ejemplo:
+
+> Se encontraron restos humanos en una cámara profunda del sistema Rising Star.
+
+No debe incorporar automáticamente una conclusión religiosa.
+
+### Claim
+
+Afirmación estructurada sobre una entidad o conjunto de entidades.
+
+Puede expresar:
+
+- composición;
+- procedencia;
+- autoría;
+- datación;
+- contenido;
+- existencia;
+- relación;
+- interpretación;
+- estado de investigación.
+
+Una Claim puede tener:
+
+- subject_entity;
+- predicate;
+- object_entity o valor;
+- source_ids;
+- evidence_ids;
+- confidence;
+- claimant;
+- date;
+- notes.
+
+### Interpretation
+
+Interpretación explícita de una evidencia o conjunto de Claims.
+
+Debe conservar:
+
+- quién la propone;
+- fuentes;
+- evidencia utilizada;
+- fecha o versión;
+- grado de confianza;
+- interpretaciones alternativas.
+
+### Hypothesis
+
+Propuesta explicativa que va más allá de lo directamente demostrado.
+
+Una hipótesis puede ser perfectamente legítima dentro de la biblioteca, pero debe estar identificada como tal.
+
+### Regla
+
+No convertir automáticamente:
+
+`Evidence → Claim factual fuerte`
+
+ni:
+
+`Evidence → religión`
+
+La transición debe quedar explícita.
+
+---
+
+## 10. Prehistoria y arqueología del comportamiento religioso
+
+El modelo debe poder estudiar el origen de prácticas relacionadas con la muerte y el simbolismo sin asumir que toda conducta simbólica constituye una religión.
+
+Ejemplo de progresión analítica:
+
+1. restos humanos;
+2. disposición del cadáver;
+3. tratamiento diferencial;
+4. entierro intencional;
+5. práctica mortuoria;
+6. repetición o estructuración de prácticas;
+7. simbolismo asociado;
+8. posible ritualización;
+9. religiosidad o sistema ritual;
+10. organización religiosa;
+11. institucionalización religiosa.
+
+Estos niveles no son una escala universal ni una cronología obligatoria. Son categorías analíticas.
+
+### Homo naledi como caso de prueba
+
+La información debe poder representarse así:
+
+`Evidence`
+→ restos humanos y distribución espacial
+
+`Claim`
+→ los restos presentan una distribución que requiere explicación
+
+`Interpretation`
+→ posible transporte o depósito intencional
+
+`Hypothesis`
+→ posible comportamiento mortuorio socialmente elaborado
+
+No debe almacenarse automáticamente:
+
+> Homo naledi tenía una religión o creía en una vida después de la muerte.
+
+La biblioteca puede registrar esas interpretaciones si existen investigadores que las hayan propuesto, pero debe atribuirlas y conservar su carácter hipotético.
+
+El mismo principio se aplica a:
+
+- Shanidar;
+- Tinshemet;
+- Chauvet;
+- Göbekli Tepe;
+- arte rupestre;
+- pigmentos;
+- objetos funerarios;
+- paisajes rituales.
+
+---
+
+## 11. Relations
+
+### Principio
+
+Una relación entre dos entidades es una afirmación estructurada, no una verdad implícita.
+
+Relaciones iniciales:
 
 - parallel
 - antecedent
@@ -99,17 +492,45 @@ Tipos iniciales:
 - translation
 - inheritance
 - reaction
+- related_to
 
-Cada relación debe poder almacenar:
+Una relación debe poder almacenar:
 
-- source_entity
-- target_entity
-- relation_type
-- confidence
-- source_ids
-- note
+- subject_entity;
+- predicate;
+- object_entity;
+- confidence;
+- source_ids;
+- evidence_ids;
+- claimant;
+- notes;
+- temporal context.
 
-## Confianza
+Por tanto:
+
+`Tradition A --influence--> Tradition B`
+
+no significa automáticamente que la influencia esté demostrada.
+
+Puede tener:
+
+`confidence = plausible`
+
+y una o varias fuentes.
+
+### Relación vs Claim
+
+Las relaciones son una especialización semántica de Claims entre entidades.
+
+Esto evita crear una tabla distinta para cada tipo de relación histórica.
+
+Una arquitectura inicial puede mantener una tabla especializada `relations` por claridad de consulta, pero conceptualmente debe conservar el mismo principio de provenance y evidencia que una Claim.
+
+---
+
+## 12. Niveles de confianza
+
+Los niveles expresan el estado de la evidencia, no el valor de una tradición.
 
 Valores iniciales:
 
@@ -119,64 +540,158 @@ Valores iniciales:
 - possible
 - unsupported
 
-Estos valores describen el estado de la evidencia, no una valoración de la tradición.
+No utilizar estos valores como puntuaciones.
 
-## Geografía
+Una relación `possible` no significa que una tradición sea menos importante; significa que esa relación concreta no está demostrada.
 
-Un Place puede tener:
+---
 
-- coordenadas
-- nombre actual
-- nombres históricos
-- regiones históricas
-- periodos de validez
-- relaciones con otros lugares
+## 13. Proveniencia
 
-No se debe asumir que una frontera moderna representa una frontera histórica.
+Toda información editorial importante debe poder responder:
 
-## Evidencia prehistórica
+- ¿Qué se afirma?
+- ¿Quién lo afirma?
+- ¿En qué fuente?
+- ¿Dónde exactamente?
+- ¿Qué evidencia lo respalda?
+- ¿Cuándo se registró?
+- ¿Qué edición o versión se utilizó?
+- ¿Cuál es el nivel de confianza?
+- ¿Existen interpretaciones alternativas?
 
-La evidencia arqueológica se modela independientemente de cualquier reconstrucción religiosa.
+La procedencia debe ser trazable hasta la fuente.
 
-Tipos iniciales:
+---
 
-- burial
-- pigment
-- cave_art
-- architecture
-- object
-- landscape
-- inscription
-- settlement
+## 14. Edición colaborativa y control editorial
 
-Flujo metodológico:
+La biblioteca será colaborativa, pero no un wiki de publicación inmediata.
 
-Evidencia → interpretación identificada → hipótesis, si corresponde.
+### User
 
-No se debe convertir automáticamente una evidencia material en una afirmación sobre una religión concreta.
+Usuario registrado.
 
-## Proveniencia
+### Role
 
-Los datos importantes deben poder responder:
+Rol editorial o de participación.
 
-- ¿qué se afirma?
-- ¿quién lo afirma?
-- ¿en qué fuente?
-- ¿qué edición o versión?
-- ¿en qué ubicación de la fuente?
-- ¿qué nivel de confianza tiene?
+Roles iniciales:
 
-## Separación textual
+- visitor
+- registered_user
+- contributor
+- editor
+- administrator
+
+### Contribution
+
+Propuesta de modificación o adición.
+
+Puede incluir:
+
+- autor;
+- entidad afectada;
+- contenido propuesto;
+- motivo;
+- fuentes;
+- evidencia;
+- fecha;
+- estado.
+
+### Revision
+
+Versión concreta de contenido o dato.
+
+Debe conservar:
+
+- quién realizó el cambio;
+- cuándo;
+- qué cambió;
+- versión anterior;
+- versión nueva.
+
+### Review
+
+Evaluación editorial de una Contribution.
+
+Estados posibles:
+
+- pending
+- needs_revision
+- approved
+- rejected
+
+### Publication
+
+Indica qué revisión está publicada.
+
+Regla fundamental:
+
+> Una contribución externa no modifica directamente el contenido publicado.
+
+Inicialmente, el administrador puede ser el único responsable de aprobar cambios. Posteriormente puede delegarse la revisión en editores.
+
+Las propuestas rechazadas deben conservarse en el historial editorial, aunque no sean visibles como contenido público.
+
+---
+
+## 15. Versionado
+
+Los datos y contenidos importantes deben ser versionables.
+
+Nunca depender exclusivamente de sobrescribir el valor anterior.
+
+El sistema debe permitir reconstruir:
+
+`versión anterior → propuesta → revisión → decisión → versión publicada`
+
+Esto es especialmente importante para:
+
+- traducciones;
+- notas filológicas;
+- interpretaciones;
+- relaciones;
+- dataciones;
+- afirmaciones controvertidas.
+
+---
+
+## 16. Separación fundamental del dominio textual
 
 Nunca tratar como equivalentes:
 
-Work → TextualWitness → Edition → Translation
+`Work → TextualWitness → Manuscript → Edition → Translation`
 
-Esto permitirá comparar:
+Cada nivel responde a una pregunta diferente:
 
-- texto original/transmitido
-- manuscritos
-- variantes
-- ediciones críticas
-- traducciones históricas
-- traducciones modernas
+- Work: ¿qué composición identificamos?
+- TextualWitness: ¿qué testimonio concreto tenemos?
+- Manuscript: ¿en qué soporte físico se conserva?
+- Edition: ¿cómo fue editado/publicado?
+- Translation: ¿cómo fue traducido?
+
+Esto permite distinguir correctamente entre:
+
+- original perdido;
+- manuscrito conservado;
+- fragmento;
+- traducción antigua;
+- edición crítica;
+- traducción moderna.
+
+---
+
+## 17. Principios de implementación
+
+Antes de crear PostgreSQL:
+
+1. validar este modelo contra casos reales;
+2. identificar relaciones ambiguas;
+3. comprobar claves y cardinalidades;
+4. definir restricciones;
+5. diseñar índices;
+6. diseñar migraciones;
+7. implementar el esquema en PostgreSQL/Drizzle.
+
+La base de datos no debe obligar al contenido histórico a ser más preciso de lo que permiten las fuentes.
