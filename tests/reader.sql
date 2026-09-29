@@ -14,6 +14,8 @@ DECLARE
   v_reader_row_count integer;
   v_variant_type text;
   v_variant_description text;
+  v_provenance_role text;
+  v_scope_path_key text;
 BEGIN
   SELECT e.id INTO v_work FROM entities e WHERE e.entity_type = 'work' AND e.stable_key = 'gospel-of-matthew';
   IF v_work IS NULL THEN RAISE EXCEPTION 'Reader validation: Gospel of Matthew work not found'; END IF;
@@ -67,6 +69,30 @@ BEGIN
       AND witness_entity.stable_key = 'matthew-regius-24-3'
       AND tvr.reading_text = 'ειπον ημιν'
   ) THEN RAISE EXCEPTION 'Reader validation: GA 019 reading is not attached to the GA 019 unit/witness pair'; END IF;
+
+  SELECT ts.provenance_role,ts.scope_path_key
+    INTO v_provenance_role,v_scope_path_key
+  FROM translation_sources ts
+  JOIN translations tr ON tr.id=ts.translation_id
+  JOIN entities te ON te.id=tr.id
+  JOIN textual_witnesses tw ON tw.id=ts.witness_id
+  JOIN entities we ON we.id=tw.work_id
+  WHERE te.stable_key='matthew-working-spanish'
+    AND we.stable_key='gospel-of-matthew'
+    AND tw.id=(SELECT id FROM entities WHERE entity_type='witness' AND stable_key='matthew-regius-24-3');
+  IF v_provenance_role <> 'reference_only' OR v_scope_path_key <> 'matthew.24.3' THEN
+    RAISE EXCEPTION 'Reader validation: GA 019 provenance must be reference_only scoped to Matthew 24:3; got role=% scope=%',v_provenance_role,v_scope_path_key;
+  END IF;
+
+  SELECT count(*) INTO v_reader_row_count
+  FROM translation_sources ts
+  JOIN translations tr ON tr.id=ts.translation_id
+  JOIN entities te ON te.id=tr.id
+  WHERE te.stable_key='matthew-24-3-working-spanish'
+    AND ts.provenance_role IN ('base_source','comparative_witness')
+    AND ts.scope_type='passage'
+    AND ts.scope_path_key='matthew.24.3';
+  IF v_reader_row_count <> 2 THEN RAISE EXCEPTION 'Reader validation: expected 2 explicitly scoped Matthew translation sources, got %',v_reader_row_count; END IF;
 
   SELECT count(*) INTO v_reader_row_count
   FROM textual_units tu
