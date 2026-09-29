@@ -203,7 +203,9 @@ BEGIN
     VALUES('schema-adversarial@example.invalid','active')
     RETURNING id INTO u;
 
-  INSERT INTO revisions(entity_id,created_by_user_id,revision_number,content_jsonb)
+  INSERT INTO revisions(
+    entity_id,created_by_user_id,revision_number,content_jsonb
+  )
     VALUES(e1,u,1,'{}')
     RETURNING id INTO r1;
 
@@ -211,6 +213,81 @@ BEGIN
     INSERT INTO publications(entity_id,revision_id,published_by_user_id)
       VALUES(e2,r1,u);
     RAISE EXCEPTION 'Cross-entity publication was accepted';
+  EXCEPTION WHEN foreign_key_violation THEN
+    NULL;
+  END;
+END $$;
+
+-- 8. A textual-variant reading must belong to the variant's unit and its witness.
+DO $$
+DECLARE
+  work_a uuid := gen_random_uuid();
+  work_b uuid := gen_random_uuid();
+  witness_a uuid := gen_random_uuid();
+  witness_b uuid := gen_random_uuid();
+  unit_a uuid := gen_random_uuid();
+  unit_b uuid := gen_random_uuid();
+  variant_a uuid := gen_random_uuid();
+  reading_valid uuid := gen_random_uuid();
+  reading_bad_variant_unit uuid := gen_random_uuid();
+  reading_bad_witness uuid := gen_random_uuid();
+BEGIN
+  INSERT INTO entities(id,entity_type,stable_key) VALUES
+    (work_a,'work','adversarial-variant-work-a'),
+    (work_b,'work','adversarial-variant-work-b'),
+    (witness_a,'textual_witness','adversarial-variant-witness-a'),
+    (witness_b,'textual_witness','adversarial-variant-witness-b'),
+    (unit_a,'textual_unit','adversarial-variant-unit-a'),
+    (unit_b,'textual_unit','adversarial-variant-unit-b'),
+    (variant_a,'textual_variant','adversarial-variant-a'),
+    (reading_valid,'textual_variant_reading','adversarial-reading-valid'),
+    (reading_bad_variant_unit,'textual_variant_reading','adversarial-reading-bad-unit'),
+    (reading_bad_witness,'textual_variant_reading','adversarial-reading-bad-witness');
+
+  INSERT INTO works(id,title,status)
+    VALUES(work_a,'Adversarial Variant Work A','draft'),
+          (work_b,'Adversarial Variant Work B','draft');
+
+  INSERT INTO textual_witnesses(id,work_id,witness_type,title_or_label)
+    VALUES(witness_a,work_a,'manuscript','Witness A'),
+          (witness_b,work_b,'manuscript','Witness B');
+
+  INSERT INTO textual_units(id,witness_id,unit_type,label)
+    VALUES(unit_a,witness_a,'verse','Unit A'),
+          (unit_b,witness_b,'verse','Unit B');
+
+  INSERT INTO textual_variants(id,textual_unit_id,variant_type,status)
+    VALUES(variant_a,unit_a,'lexical_form','documented');
+
+  INSERT INTO textual_variant_readings(
+    id,variant_id,witness_id,textual_unit_id,reading_text
+  )
+    VALUES(reading_valid,variant_a,witness_a,unit_a,'reading A');
+
+  IF NOT EXISTS (
+    SELECT 1 FROM textual_variant_readings
+    WHERE id=reading_valid
+      AND variant_id=variant_a
+      AND witness_id=witness_a
+      AND textual_unit_id=unit_a
+  ) THEN
+    RAISE EXCEPTION 'Valid textual-variant reading was not retained';
+  END IF;
+
+  BEGIN
+    INSERT INTO textual_variant_readings(
+      id,variant_id,witness_id,textual_unit_id,reading_text
+    ) VALUES(reading_bad_variant_unit,variant_a,witness_b,unit_b,'reading B');
+    RAISE EXCEPTION 'Cross-context variant reading was accepted';
+  EXCEPTION WHEN foreign_key_violation THEN
+    NULL;
+  END;
+
+  BEGIN
+    INSERT INTO textual_variant_readings(
+      id,variant_id,witness_id,textual_unit_id,reading_text
+    ) VALUES(reading_bad_witness,variant_a,witness_b,unit_a,'reading C');
+    RAISE EXCEPTION 'Variant reading with mismatched witness was accepted';
   EXCEPTION WHEN foreign_key_violation THEN
     NULL;
   END;
