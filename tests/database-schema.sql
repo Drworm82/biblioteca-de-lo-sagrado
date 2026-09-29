@@ -84,10 +84,12 @@ BEGIN
   INSERT INTO entities(id,entity_type,stable_key) VALUES(e,'work','case-multiple-datings');
   INSERT INTO works(id,title,status) VALUES(e,'Corpus Fixture: Multiple Datings','draft');
 
-  INSERT INTO entities(entity_type,stable_key) VALUES
-    ('source','case-dating-source-a'),('source','case-dating-source-b')
+  INSERT INTO entities(entity_type,stable_key)
+    VALUES ('source','case-dating-source-a')
     RETURNING id INTO s1;
-  INSERT INTO entities(entity_type,stable_key) VALUES('source','case-dating-source-b-copy')
+
+  INSERT INTO entities(entity_type,stable_key)
+    VALUES ('source','case-dating-source-b')
     RETURNING id INTO s2;
 
   INSERT INTO sources(id,source_type,title) VALUES
