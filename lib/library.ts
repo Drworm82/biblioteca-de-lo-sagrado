@@ -5,8 +5,9 @@ import {getDb} from "@/lib/db";
 export type WorkListItem={stableKey:string;title:string;description:string|null;status:string;tradition:string|null;witnessCount:number};
 export type ReaderContent={representationType:string;textContent:string;normalizedText:string|null;sourceTitle:string|null;sourceUrl:string|null;notes:string|null};
 export type ReaderVariant={unitKey:string;variantType:string;description:string|null;status:string;witnessLabel:string|null;readingText:string;normalizedText:string|null;notes:string|null;sourceTitle:string|null};
+export type TranslationProvenance={translationTitle:string;provenanceRole:string;scopeType:string;scopePathKey:string|null;scopeLabel:string|null;sourceKind:string;sourceLabel:string|null;notes:string|null};
 export type ReaderUnit={stableKey:string;label:string|null;unitType:string;pathKey:string|null;witnessLabel:string|null;translationTitle:string|null;contents:ReaderContent[];variants:ReaderVariant[]};
-export type WorkDetail=WorkListItem&{workId:string;traditions:string[];dates:Array<{earliest:number|null;latest:number|null;precision:string|null;method:string|null;confidence:string|null;notes:string|null}>;witnesses:Array<{stableKey:string;label:string|null;type:string;language:string|null;script:string|null;dateNote:string|null}>;units:ReaderUnit[];sources:Array<{title:string;sourceType:string;author:string|null;url:string|null;notes:string|null}>};
+export type WorkDetail=WorkListItem&{workId:string;traditions:string[];dates:Array<{earliest:number|null;latest:number|null;precision:string|null;method:string|null;confidence:string|null;notes:string|null}>;witnesses:Array<{stableKey:string;label:string|null;type:string;language:string|null;script:string|null;dateNote:string|null}>;units:ReaderUnit[];translationProvenance:TranslationProvenance[];sources:Array<{title:string;sourceType:string;author:string|null;url:string|null;notes:string|null}>};
 
 export async function listWorks():Promise<WorkListItem[]>{
  const rows=await getDb().execute(sql`
@@ -18,7 +19,7 @@ export async function listWorks():Promise<WorkListItem[]>{
 }
 
 export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
- const [wr,tr,dr,wi,un,sr]=await Promise.all([
+ const [wr,tr,dr,wi,un,tp,sr]=await Promise.all([
   getDb().execute(sql`SELECT e.id AS "workId",e.stable_key AS "stableKey",w.title,w.description,w.status,COUNT(DISTINCT tw.id)::int AS "witnessCount",MIN(t.name) AS tradition FROM works w JOIN entities e ON e.id=w.id LEFT JOIN work_traditions wt ON wt.work_id=w.id LEFT JOIN traditions t ON t.id=wt.tradition_id LEFT JOIN textual_witnesses tw ON tw.work_id=w.id WHERE e.entity_type='work' AND e.stable_key=${stableKey} GROUP BY e.id,e.stable_key,w.title,w.description,w.status;`),
   getDb().execute(sql`SELECT t.name FROM work_traditions wt JOIN traditions t ON t.id=wt.tradition_id JOIN entities e ON e.id=wt.work_id WHERE e.stable_key=${stableKey} ORDER BY t.name;`),
   getDb().execute(sql`SELECT da.earliest,da.latest,da.precision,da.dating_method AS method,cl.label AS confidence,da.notes FROM dating_assertions da JOIN entities e ON e.id=da.entity_id LEFT JOIN confidence_levels cl ON cl.id=da.confidence_id WHERE e.stable_key=${stableKey} ORDER BY da.earliest NULLS LAST;`),
@@ -36,6 +37,23 @@ export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
    JOIN entities we ON we.id=w.id
    WHERE we.stable_key=${stableKey}
    ORDER BY tu.ordinal NULLS LAST,tu.path_key;
+  `),
+  getDb().execute(sql`
+   SELECT DISTINCT tr.title AS "translationTitle",ts.provenance_role AS "provenanceRole",
+          ts.scope_type AS "scopeType",ts.scope_path_key AS "scopePathKey",ts.scope_label AS "scopeLabel",
+          CASE WHEN ts.witness_id IS NOT NULL THEN 'witness' ELSE 'edition' END AS "sourceKind",
+          COALESCE(tw.title_or_label,ed.title) AS "sourceLabel",ts.notes
+   FROM translation_sources ts
+   JOIN translations tr ON tr.id=ts.translation_id
+   LEFT JOIN textual_witnesses tw ON tw.id=ts.witness_id
+   LEFT JOIN editions ed ON ed.id=ts.edition_id
+   LEFT JOIN edition_witnesses ew ON ew.edition_id=ed.id
+   LEFT JOIN textual_witnesses edition_witness ON edition_witness.id=ew.witness_id
+   JOIN entities te ON te.id=tr.id
+   JOIN works w ON w.id=COALESCE(tw.work_id,edition_witness.work_id)
+   JOIN entities we ON we.id=w.id
+   WHERE we.stable_key=${stableKey}
+   ORDER BY tr.title,ts.provenance_role,ts.scope_path_key,COALESCE(tw.title_or_label,ed.title);
   `),
   getDb().execute(sql`SELECT DISTINCT s.title,s.source_type AS "sourceType",s.author_text AS author,s.url,s.notes FROM sources s JOIN work_traditions wt ON wt.source_id=s.id JOIN entities e ON e.id=wt.work_id WHERE e.stable_key=${stableKey} ORDER BY s.title;`)
  ]);
@@ -79,5 +97,5 @@ export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
  const variantByUnit=new Map<string,ReaderVariant[]>();
  for(const row of readingRows){const list=variantByUnit.get(row.unitKey)??[];list.push(row);variantByUnit.set(row.unitKey,list);}
  const baseUnits=un as unknown as Array<Omit<ReaderUnit,"contents"|"variants">>;
- return {...work,traditions:(tr as unknown as Array<{name:string}>).map(r=>r.name),dates:dr as unknown as WorkDetail["dates"],witnesses:wi as unknown as WorkDetail["witnesses"],units:baseUnits.map(u=>({...u,contents:byUnit.get(u.stableKey)??[],variants:variantByUnit.get(u.stableKey)??[]})),sources:sr as unknown as WorkDetail["sources"]};
+ return {...work,traditions:(tr as unknown as Array<{name:string}>).map(r=>r.name),dates:dr as unknown as WorkDetail["dates"],witnesses:wi as unknown as WorkDetail["witnesses"],units:baseUnits.map(u=>({...u,contents:byUnit.get(u.stableKey)??[],variants:variantByUnit.get(u.stableKey)??[]})),translationProvenance:tp as unknown as TranslationProvenance[],sources:sr as unknown as WorkDetail["sources"]};
 }
