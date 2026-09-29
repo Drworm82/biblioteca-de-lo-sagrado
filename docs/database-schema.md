@@ -40,16 +40,3 @@ Con la migración 0003 quedan cubiertas las cuatro capas estructurales pendiente
 
 El siguiente trabajo ya puede centrarse en validación con casos reales y en el corpus, sin que eso implique rediseñar estas capas fundamentales.
 
-## 33. Procedencia de traducciones
-
-La migración 0005 añade procedencia explícita a cada relación entre una traducción y su fuente mediante:
-
-- `provenance_role`: distingue fuente base, testigo comparativo, referencia solamente y base editorial;
-- `scope_type`: indica si la relación afecta a la obra, un pasaje o una unidad;
-- `scope_path_key`: permite localizar el ámbito textual mediante la ruta canónica del corpus;
-- `scope_label`: conserva una etiqueta legible del ámbito;
-- `notes`: explica la relación cuando la categoría estructurada no basta.
-
-Esto evita que una fuente consultada para un solo pasaje aparezca en el lector como si fuera automáticamente la fuente de toda la traducción. Una traducción puede tener varias fuentes con funciones diferentes y ámbitos diferentes.
-
-La procedencia editorial queda separada del contenido de la traducción: el texto traducido sigue almacenándose en `textual_unit_contents`, mientras que su relación con testigos y ediciones se registra en `translation_sources`.
