@@ -5,7 +5,7 @@ BEGIN;
 CREATE FUNCTION pg_temp.entity_id(p_type text, p_key text)
 RETURNS uuid
 LANGUAGE plpgsql
-AS $$
+AS $reader$
 DECLARE v_id uuid;
 BEGIN
   SELECT id INTO v_id
@@ -17,7 +17,7 @@ BEGIN
   END IF;
 
   RETURN v_id;
-END $;
+END $reader$;
 
 INSERT INTO entities(entity_type, stable_key) VALUES
     ('unit_content','matthew-24-3-regius-original'),
