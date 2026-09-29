@@ -53,6 +53,11 @@ INSERT INTO textual_unit_contents(
 -- The Greek witness sample for GA 019 remains explicitly limited to 24:3.
 -- ---------------------------------------------------------------------------
 
+INSERT INTO entities(entity_type,stable_key) VALUES
+    ('source','biblioteca-matthew-working-translation'),
+    ('translation','matthew-working-spanish')
+ON CONFLICT (entity_type,stable_key) DO NOTHING;
+
 INSERT INTO sources(
     id,source_type,title,author_text,publisher,publication_year,doi,url,notes
 ) VALUES (
