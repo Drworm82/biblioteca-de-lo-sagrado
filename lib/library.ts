@@ -249,7 +249,8 @@ export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
     query<any>("confidence_levels",{select:"id,label"}),
     query<any>("translation_sources",{select:"translation_id,edition_id,witness_id,source_type,notes"}),
     query<any>("edition_witnesses",{select:"edition_id,witness_id"}),
-    query<any>("entities",{select:"id,stable_key"})
+    query<any>("entities",{select:"id,stable_key,entity_type"}),
+    query<any>("relations",{select:"subject_entity_id,predicate,object_entity_id,confidence_id,status,notes",or:"subject_entity_id.eq."+workId+",object_entity_id.eq."+workId})
   ]);
   const work=works[0];if(!work)return null;
   const witnessIds=witnesses.map(w=>w.id);
