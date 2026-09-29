@@ -51,6 +51,27 @@ const timeline = [
     meta: "Grecia arcaica y clásica",
   },
   {
+    date: "c. 1200–900 a.C.",
+    type: "Religión israelita antigua",
+    title: "Los primeros israelitas",
+    text: "La religión de los primeros grupos israelitas debe estudiarse dentro del paisaje religioso del Levante. Inscripciones, asentamientos, objetos y textos posteriores permiten reconstruir un panorama que no debe proyectarse automáticamente desde el monoteísmo judío posterior.",
+    meta: "Canaán · primeros reinos y comunidades israelitas",
+  },
+  {
+    date: "c. 1000–586 a.C.",
+    type: "Religión israelita antigua",
+    title: "Israel y Judá",
+    text: "Durante las monarquías de Israel y Judá coexistieron distintas prácticas, santuarios y concepciones sobre lo divino. La evidencia textual y arqueológica permite estudiar procesos de centralización, reforma y transformación religiosa.",
+    meta: "Reinos de Israel y Judá · Jerusalén · santuarios locales",
+  },
+  {
+    date: "586–332 a.C.",
+    type: "Transformación religiosa",
+    title: "Exilio, retorno y período persa",
+    text: "La destrucción de Jerusalén y el exilio babilónico forman parte de una etapa decisiva de transformación. El período posterior muestra la reorganización de comunidades y tradiciones que desembocará en el diverso mundo del judaísmo del Segundo Templo.",
+    meta: "Babilonia · Yehud · período persa",
+  },
+  {
     date: "siglos II a.C.–I d.C.",
     type: "Corpus",
     title: "Judaísmo del Segundo Templo",
