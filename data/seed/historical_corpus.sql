@@ -468,8 +468,8 @@ INSERT INTO interpretation_claims(interpretation_id,claim_id) VALUES
 ;
 
 INSERT INTO interpretation_sources(interpretation_id,source_id,source_location_id) VALUES
-(pg_temp.entity_id('interpretation','naledi-mortuary-behavior'),pg_temp.entity_id('source','berger-et-al-meaning-2025'),
- (SELECT id FROM source_locations WHERE source_id=pg_temp.entity_id('source','berger-et-al-meaning-2025') LIMIT 1)),
+(pg_temp.entity_id('interpretation','naledi-mortuary-behavior'),pg_temp.entity_id('source','berger-et-al-2025-meaning'),
+ (SELECT id FROM source_locations WHERE source_id=pg_temp.entity_id('source','berger-et-al-2025-meaning') LIMIT 1)),
 (pg_temp.entity_id('interpretation','naledi-cultural-burial'),pg_temp.entity_id('source','berger-et-al-2025-naledi'),
  (SELECT id FROM source_locations WHERE source_id=pg_temp.entity_id('source','berger-et-al-2025-naledi') LIMIT 1))
 ;
@@ -506,8 +506,8 @@ INSERT INTO hypothesis_interpretations(hypothesis_id,interpretation_id) VALUES
 INSERT INTO hypothesis_sources(hypothesis_id,source_id,source_location_id) VALUES
 (pg_temp.entity_id('hypothesis','naledi-cultural-burial'),pg_temp.entity_id('source','berger-et-al-2025-naledi'),
  (SELECT id FROM source_locations WHERE source_id=pg_temp.entity_id('source','berger-et-al-2025-naledi') LIMIT 1)),
-(pg_temp.entity_id('hypothesis','naledi-meaning-making'),pg_temp.entity_id('source','berger-et-al-meaning-2025'),
- (SELECT id FROM source_locations WHERE source_id=pg_temp.entity_id('source','berger-et-al-meaning-2025') LIMIT 1))
+(pg_temp.entity_id('hypothesis','naledi-meaning-making'),pg_temp.entity_id('source','berger-et-al-2025-meaning'),
+ (SELECT id FROM source_locations WHERE source_id=pg_temp.entity_id('source','berger-et-al-2025-meaning') LIMIT 1))
 ;
 
 COMMIT;
