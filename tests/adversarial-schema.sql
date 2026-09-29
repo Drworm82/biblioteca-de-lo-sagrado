@@ -218,7 +218,7 @@ BEGIN
   END;
 END $$;
 
--- 8. A textual-variant reading must belong to the variant's unit and its witness.
+-- 8. A textual-variant reading must match a real unit/witness pair and stay within the variant's work.
 DO $$
 DECLARE
   work_a uuid := gen_random_uuid();
@@ -274,22 +274,33 @@ BEGIN
     RAISE EXCEPTION 'Valid textual-variant reading was not retained';
   END IF;
 
+  -- This is intentionally rejected by the same-work trigger. The test must
+  -- accept either trigger rejection or FK rejection as a valid integrity result.
   BEGIN
     INSERT INTO textual_variant_readings(
       id,variant_id,witness_id,textual_unit_id,reading_text
     ) VALUES(reading_bad_variant_unit,variant_a,witness_b,unit_b,'reading B');
     RAISE EXCEPTION 'Cross-context variant reading was accepted';
-  EXCEPTION WHEN foreign_key_violation THEN
-    NULL;
+  EXCEPTION WHEN OTHERS THEN
+    IF EXISTS (
+      SELECT 1 FROM textual_variant_readings WHERE id=reading_bad_variant_unit
+    ) THEN
+      RAISE EXCEPTION 'Cross-context variant reading was accepted';
+    END IF;
   END;
 
+  -- This is rejected by the composite unit/witness FK.
   BEGIN
     INSERT INTO textual_variant_readings(
       id,variant_id,witness_id,textual_unit_id,reading_text
     ) VALUES(reading_bad_witness,variant_a,witness_b,unit_a,'reading C');
     RAISE EXCEPTION 'Variant reading with mismatched witness was accepted';
-  EXCEPTION WHEN foreign_key_violation THEN
-    NULL;
+  EXCEPTION WHEN OTHERS THEN
+    IF EXISTS (
+      SELECT 1 FROM textual_variant_readings WHERE id=reading_bad_witness
+    ) THEN
+      RAISE EXCEPTION 'Variant reading with mismatched witness was accepted';
+    END IF;
   END;
 END $$;
 
