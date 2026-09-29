@@ -6,6 +6,8 @@ on:
       - "db/migrations/**"
       - "tests/database-schema.sql"
       - "tests/adversarial-schema.sql"
+      - "tests/reader.sql"
+      - "data/seed/reader_demo.sql"
       - "data/seed/historical_corpus.sql"
       - ".github/workflows/schema-tests.yml"
   pull_request:
@@ -42,6 +44,7 @@ jobs:
           psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0001_initial_schema.sql
           psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0002_schema_integrity_patch.sql
           psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0003_textual_variants_and_versioning.sql
+          psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0004_textual_unit_contents.sql
       - name: Run schema smoke tests
         env:
           PGPASSWORD: postgres
@@ -57,3 +60,13 @@ jobs:
           PGPASSWORD: postgres
         run: |
           psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f data/seed/historical_corpus.sql
+      - name: Seed reader demonstration content
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f data/seed/reader_demo.sql
+      - name: Run textual reader validation
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f tests/reader.sql
