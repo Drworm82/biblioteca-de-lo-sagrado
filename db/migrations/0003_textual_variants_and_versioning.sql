@@ -43,9 +43,6 @@ CREATE TABLE textual_variant_readings (
     language_id uuid REFERENCES languages(id) ON DELETE RESTRICT,
     notes text,
     UNIQUE(variant_id, witness_id, textual_unit_id),
-    FOREIGN KEY(variant_id, textual_unit_id)
-        REFERENCES textual_variants(id, textual_unit_id)
-        ON DELETE RESTRICT,
     FOREIGN KEY(textual_unit_id, witness_id)
         REFERENCES textual_units(id, witness_id)
         ON DELETE RESTRICT
@@ -56,6 +53,44 @@ CREATE INDEX textual_variant_readings_variant_idx
 
 CREATE INDEX textual_variant_readings_witness_idx
     ON textual_variant_readings(witness_id);
+
+-- A variant is anchored to one textual unit, but its readings may come from
+-- corresponding units in other witnesses. Those witnesses must belong to the
+-- same work as the variant's anchor witness.
+CREATE OR REPLACE FUNCTION validate_textual_variant_reading_context()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    variant_work_id uuid;
+    reading_work_id uuid;
+BEGIN
+    SELECT tw.work_id
+      INTO variant_work_id
+      FROM textual_variants tv
+      JOIN textual_units tu ON tu.id = tv.textual_unit_id
+      JOIN textual_witnesses tw ON tw.id = tu.witness_id
+     WHERE tv.id = NEW.variant_id;
+
+    SELECT tw.work_id
+      INTO reading_work_id
+      FROM textual_witnesses tw
+     WHERE tw.id = NEW.witness_id;
+
+    IF variant_work_id IS DISTINCT FROM reading_work_id THEN
+        RAISE EXCEPTION
+            'Textual variant reading witness must belong to the same work as the variant anchor';
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER textual_variant_reading_context_trg
+BEFORE INSERT OR UPDATE OF variant_id, witness_id, textual_unit_id
+ON textual_variant_readings
+FOR EACH ROW
+EXECUTE FUNCTION validate_textual_variant_reading_context();
 
 CREATE TABLE textual_variant_sources (
     variant_id uuid NOT NULL REFERENCES textual_variants(id) ON DELETE RESTRICT,
