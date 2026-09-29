@@ -9,6 +9,7 @@ on:
       - "tests/database-schema.sql"
       - "tests/adversarial-schema.sql"
       - "tests/reader.sql"
+      - "tests/timeline.sql"
       - "data/seed/reader_demo.sql"
       - "data/seed/historical_corpus.sql"
       - ".github/workflows/schema-tests.yml"
@@ -74,3 +75,8 @@ jobs:
           PGPASSWORD: postgres
         run: |
           psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f tests/reader.sql
+      - name: Run timeline validation
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f tests/timeline.sql
