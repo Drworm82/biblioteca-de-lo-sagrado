@@ -40,3 +40,18 @@ Con la migración 0003 quedan cubiertas las cuatro capas estructurales pendiente
 
 El siguiente trabajo ya puede centrarse en validación con casos reales y en el corpus, sin que eso implique rediseñar estas capas fundamentales.
 
+
+
+## 33. Acontecimientos históricos y cronología unificada
+
+Los acontecimientos históricos se modelan como entidades propias mediante `historical_events`. Esto permite distinguir un acontecimiento de una obra, un testimonio o una evidencia arqueológica, aunque todos puedan aparecer en la misma cronología.
+
+La línea temporal unificada puede reunir:
+
+- obras y corpus;
+- evidencias registradas;
+- acontecimientos históricos.
+
+La datación continúa en `dating_assertions`, por lo que una entrada puede conservar varias propuestas independientes. La interfaz no convierte una de ellas en la fecha “verdadera”.
+
+Las fuentes de un acontecimiento se conservan mediante `historical_event_sources`.
