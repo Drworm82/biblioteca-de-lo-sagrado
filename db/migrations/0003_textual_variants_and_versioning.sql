@@ -22,7 +22,8 @@ CREATE TABLE textual_variants (
     description text,
     status text NOT NULL,
     created_at timestamptz NOT NULL DEFAULT now(),
-    updated_at timestamptz NOT NULL DEFAULT now()
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    UNIQUE(id, textual_unit_id)
 );
 
 CREATE INDEX textual_variants_unit_idx
@@ -32,12 +33,18 @@ CREATE TABLE textual_variant_readings (
     id uuid PRIMARY KEY REFERENCES entities(id) ON DELETE RESTRICT,
     variant_id uuid NOT NULL REFERENCES textual_variants(id) ON DELETE RESTRICT,
     witness_id uuid NOT NULL REFERENCES textual_witnesses(id) ON DELETE RESTRICT,
-    textual_unit_id uuid REFERENCES textual_units(id) ON DELETE RESTRICT,
+    textual_unit_id uuid NOT NULL REFERENCES textual_units(id) ON DELETE RESTRICT,
     reading_text text NOT NULL,
     normalized_text text,
     language_id uuid REFERENCES languages(id) ON DELETE RESTRICT,
     notes text,
-    UNIQUE(variant_id, witness_id, textual_unit_id)
+    UNIQUE(variant_id, witness_id, textual_unit_id),
+    FOREIGN KEY(variant_id, textual_unit_id)
+        REFERENCES textual_variants(id, textual_unit_id)
+        ON DELETE RESTRICT,
+    FOREIGN KEY(textual_unit_id, witness_id)
+        REFERENCES textual_units(id, witness_id)
+        ON DELETE RESTRICT
 );
 
 CREATE INDEX textual_variant_readings_variant_idx
