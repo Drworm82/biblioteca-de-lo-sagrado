@@ -132,9 +132,9 @@ export default async function HomePage() {
   const libraryItems = datedWorks.map(workToTimelineItem);
   const timeline = [...editorialTimeline, ...libraryItems].sort((a,b) => {
     const parse = (date:string) => {
-      const match = date.match(/-?\\d[\\d.]*/);
+      const match = date.match(/-?\d[\d.]*/);
       if(!match)return Number.POSITIVE_INFINITY;
-      const n=Number(match[0].replace(/\\./g,""));
+      const n=Number(match[0].replace(/\./g,""));
       return date.includes("a.C.") ? -(n-1) : n;
     };
     return parse(a.date)-parse(b.date);
