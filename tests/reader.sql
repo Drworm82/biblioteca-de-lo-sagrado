@@ -12,6 +12,8 @@ DECLARE
   v_original_source text;
   v_regius_reading_count integer;
   v_reader_row_count integer;
+  v_variant_type text;
+  v_variant_description text;
 BEGIN
   SELECT e.id INTO v_work FROM entities e WHERE e.entity_type = 'work' AND e.stable_key = 'gospel-of-matthew';
   IF v_work IS NULL THEN RAISE EXCEPTION 'Reader validation: Gospel of Matthew work not found'; END IF;
@@ -37,6 +39,13 @@ BEGIN
   FROM textual_variant_readings tvr
   WHERE tvr.witness_id = (SELECT tw.id FROM textual_witnesses tw JOIN entities e ON e.id = tw.id WHERE e.stable_key = 'matthew-regius-24-3');
   IF v_regius_reading_count <> 1 THEN RAISE EXCEPTION 'Reader validation: expected 1 GA 019 variant reading, got %', v_regius_reading_count; END IF;
+
+  SELECT tv.variant_type,tv.description INTO v_variant_type,v_variant_description
+  FROM textual_variants tv
+  JOIN entities e ON e.id=tv.id
+  WHERE e.stable_key='matthew-24-3-imperative';
+  IF v_variant_type <> 'lexical_form' THEN RAISE EXCEPTION 'Reader validation: unexpected variant type: %', v_variant_type; END IF;
+  IF v_variant_description IS NULL OR v_variant_description NOT LIKE '%ειπον / ειπε%' THEN RAISE EXCEPTION 'Reader validation: variant description missing or unexpected: %', v_variant_description; END IF;
 
   SELECT count(*) INTO v_reader_row_count
   FROM textual_variant_readings tvr
