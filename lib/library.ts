@@ -4,7 +4,8 @@ import {getDb} from "@/lib/db";
 
 export type WorkListItem={stableKey:string;title:string;description:string|null;status:string;tradition:string|null;witnessCount:number};
 export type ReaderContent={representationType:string;textContent:string;normalizedText:string|null;sourceTitle:string|null;sourceUrl:string|null;notes:string|null};
-export type ReaderUnit={stableKey:string;label:string|null;unitType:string;pathKey:string|null;witnessLabel:string|null;translationTitle:string|null;contents:ReaderContent[];variantReadings:Array<{witnessLabel:string|null;readingText:string;normalizedText:string|null;notes:string|null;sourceTitle:string|null}>};
+export type ReaderVariant={unitKey:string;variantType:string;description:string|null;status:string;witnessLabel:string|null;readingText:string;normalizedText:string|null;notes:string|null;sourceTitle:string|null};
+export type ReaderUnit={stableKey:string;label:string|null;unitType:string;pathKey:string|null;witnessLabel:string|null;translationTitle:string|null;contents:ReaderContent[];variants:ReaderVariant[]};
 export type WorkDetail=WorkListItem&{workId:string;traditions:string[];dates:Array<{earliest:number|null;latest:number|null;precision:string|null;method:string|null;confidence:string|null;notes:string|null}>;witnesses:Array<{stableKey:string;label:string|null;type:string;language:string|null;script:string|null;dateNote:string|null}>;units:ReaderUnit[];sources:Array<{title:string;sourceType:string;author:string|null;url:string|null;notes:string|null}>};
 
 export async function listWorks():Promise<WorkListItem[]>{
@@ -57,7 +58,8 @@ export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
    ORDER BY u.stable_key,tuc.representation_type;
   `),
   getDb().execute(sql`
-   SELECT uv.stable_key AS "unitKey",tw.title_or_label AS "witnessLabel",tvr.reading_text AS "readingText",
+   SELECT uv.stable_key AS "unitKey",tv.variant_type AS "variantType",tv.description,tv.status,
+          tw.title_or_label AS "witnessLabel",tvr.reading_text AS "readingText",
           tvr.normalized_text AS "normalizedText",tvr.notes,s.title AS "sourceTitle"
    FROM textual_variant_readings tvr
    JOIN textual_variants tv ON tv.id=tvr.variant_id
@@ -67,15 +69,15 @@ export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
    LEFT JOIN sources s ON s.id=tvrs.source_id
    JOIN entities work_entity ON work_entity.id=tw.work_id
    WHERE work_entity.stable_key=${stableKey}
-   ORDER BY uv.stable_key,tw.title_or_label;
+   ORDER BY uv.stable_key,tv.variant_type,tvr.reading_text,tw.title_or_label;
   `)
  ]);
  const contentRows=cr as unknown as Array<ReaderContent & {unitKey:string}>;
- const readingRows=rr as unknown as Array<{unitKey:string;witnessLabel:string|null;readingText:string;normalizedText:string|null;notes:string|null;sourceTitle:string|null}>;
+ const readingRows=rr as unknown as ReaderVariant[];
  const byUnit=new Map<string,ReaderContent[]>();
  for(const row of contentRows){const list=byUnit.get(row.unitKey)??[];list.push(row);byUnit.set(row.unitKey,list);}
- const readingByUnit=new Map<string,typeof readingRows>();
- for(const row of readingRows){const list=readingByUnit.get(row.unitKey)??[];list.push(row);readingByUnit.set(row.unitKey,list);}
- const baseUnits=un as unknown as Array<Omit<ReaderUnit,"contents"|"variantReadings">>;
- return {...work,traditions:(tr as unknown as Array<{name:string}>).map(r=>r.name),dates:dr as unknown as WorkDetail["dates"],witnesses:wi as unknown as WorkDetail["witnesses"],units:baseUnits.map(u=>({...u,contents:byUnit.get(u.stableKey)??[],variantReadings:(readingByUnit.get(u.stableKey)??[]).map(r=>({witnessLabel:r.witnessLabel,readingText:r.readingText,normalizedText:r.normalizedText,notes:r.notes,sourceTitle:r.sourceTitle}))})),sources:sr as unknown as WorkDetail["sources"]};
+ const variantByUnit=new Map<string,ReaderVariant[]>();
+ for(const row of readingRows){const list=variantByUnit.get(row.unitKey)??[];list.push(row);variantByUnit.set(row.unitKey,list);}
+ const baseUnits=un as unknown as Array<Omit<ReaderUnit,"contents"|"variants">>;
+ return {...work,traditions:(tr as unknown as Array<{name:string}>).map(r=>r.name),dates:dr as unknown as WorkDetail["dates"],witnesses:wi as unknown as WorkDetail["witnesses"],units:baseUnits.map(u=>({...u,contents:byUnit.get(u.stableKey)??[],variants:variantByUnit.get(u.stableKey)??[]})),sources:sr as unknown as WorkDetail["sources"]};
 }
