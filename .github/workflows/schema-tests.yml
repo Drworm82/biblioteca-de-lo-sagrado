@@ -50,7 +50,7 @@ jobs:
           psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0004_textual_unit_contents.sql
           psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0005_historical_events.sql
           psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0006_public_timeline_read.sql
-          cat db/migrations/0007_public_relation_read.sql | psql "$DATABASE_URL"
+          psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0007_public_relation_read.sql
       - name: Run schema smoke tests
         env:
           PGPASSWORD: postgres
