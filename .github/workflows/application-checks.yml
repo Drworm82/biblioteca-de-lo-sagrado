@@ -36,6 +36,7 @@ jobs:
           psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0002_schema_integrity_patch.sql
           psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0003_textual_variants_and_versioning.sql
           psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0004_textual_unit_contents.sql
+          psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0005_translation_provenance.sql
       - name: Seed application reader corpus
         env:
           PGPASSWORD: postgres
