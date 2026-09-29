@@ -7,7 +7,7 @@
 
 BEGIN;
 
-CREATE FUNCTION pg_temp.pg_temp.entity_id(p_type text, p_key text)
+CREATE FUNCTION pg_temp.entity_id(p_type text, p_key text)
 RETURNS uuid
 LANGUAGE plpgsql
 AS $$
