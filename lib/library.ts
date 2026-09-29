@@ -50,12 +50,13 @@ export type TimelineDating = {
   method:string|null;
   confidence:string|null;
   notes:string|null;
+  category:"evidence"|"archaeology"|"tradition"|"corpus"|"event";
 };
 
 export async function listTimelineWorks():Promise<TimelineDating[]>{
   const [works,entities,links,traditions,dates,confidence]=await Promise.all([
     query<any>("works",{select:"id,title",order:"title.asc"}),
-    query<any>("entities",{select:"id,stable_key",entity_type:"eq.work"}),
+    query<any>("entities",{select:"id,stable_key"}),
     query<any>("work_traditions",{select:"work_id,tradition_id"}),
     query<any>("traditions",{select:"id,name"}),
     query<any>("dating_assertions",{select:"id,entity_id,earliest,latest,precision,dating_method,confidence_id,notes",order:"earliest.asc.nullslast"}),
@@ -87,10 +88,70 @@ export async function listTimelineWorks():Promise<TimelineDating[]>{
         method:date.dating_method??null,
         confidence:confidenceById.get(date.confidence_id)||null,
         notes:date.notes??null,
+        category:"corpus" as const,
       };
     })
     .filter((work):work is TimelineDating => work!==null)
     .filter(work=>work.earliest!==null||work.latest!==null)
+    .sort((a,b)=>(a.earliest??a.latest??Infinity)-(b.earliest??b.latest??Infinity));
+}
+
+export async function listTimelineItems():Promise<TimelineDating[]>{
+  const [works,entities,workLinks,traditions,dates,confidence,evidence,events]=await Promise.all([
+    query<any>("works",{select:"id,title",order:"title.asc"}),
+    query<any>("entities",{select:"id,stable_key"}),
+    query<any>("work_traditions",{select:"work_id,tradition_id"}),
+    query<any>("traditions",{select:"id,name"}),
+    query<any>("dating_assertions",{select:"id,entity_id,earliest,latest,precision,dating_method,confidence_id,notes",order:"earliest.asc.nullslast"}),
+    query<any>("confidence_levels",{select:"id,label"}),
+    query<any>("evidence",{select:"id,evidence_type,description"}),
+    query<any>("historical_events",{select:"id,title,event_type,description"})
+  ]);
+  const entityById=new Map(entities.map(e=>[e.id,e.stable_key]));
+  const workById=new Map(works.map(w=>[w.id,w]));
+  const evidenceById=new Map(evidence.map(e=>[e.id,e]));
+  const eventById=new Map(events.map(e=>[e.id,e]));
+  const traditionById=new Map(traditions.map(t=>[t.id,t.name]));
+  const confidenceById=new Map(confidence.map(c=>[c.id,c.label]));
+  const traditionsByWork=new Map<string,string[]>();
+  for(const link of workLinks){
+    const name=traditionById.get(link.tradition_id);
+    if(!name)continue;
+    const values=traditionsByWork.get(link.work_id)||[];
+    values.push(name);
+    traditionsByWork.set(link.work_id,values);
+  }
+  return dates
+    .map(date=>{
+      const work=workById.get(date.entity_id);
+      if(work)return {
+        stableKey:entityById.get(work.id)||work.id,title:work.title,
+        tradition:traditionsByWork.get(work.id)?.[0]||null,
+        earliest:date.earliest??null,latest:date.latest??null,
+        precision:date.precision??null,method:date.dating_method??null,
+        confidence:confidenceById.get(date.confidence_id)||null,notes:date.notes??null,
+        category:"corpus" as const,
+      };
+      const ev=evidenceById.get(date.entity_id);
+      if(ev)return {
+        stableKey:entityById.get(ev.id)||ev.id,title:ev.description,
+        tradition:null,earliest:date.earliest??null,latest:date.latest??null,
+        precision:date.precision??null,method:date.dating_method??null,
+        confidence:confidenceById.get(date.confidence_id)||null,
+        notes:date.notes??null,category:"evidence" as const,
+      };
+      const event=eventById.get(date.entity_id);
+      if(event)return {
+        stableKey:entityById.get(event.id)||event.id,title:event.title,
+        tradition:null,earliest:date.earliest??null,latest:date.latest??null,
+        precision:date.precision??null,method:date.dating_method??null,
+        confidence:confidenceById.get(date.confidence_id)||null,
+        notes:date.notes??null,category:"event" as const,
+      };
+      return null;
+    })
+    .filter((item):item is TimelineDating => item!==null)
+    .filter(item=>item.earliest!==null||item.latest!==null)
     .sort((a,b)=>(a.earliest??a.latest??Infinity)-(b.earliest??b.latest??Infinity));
 }
 
