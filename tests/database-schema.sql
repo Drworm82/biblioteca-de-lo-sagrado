@@ -36,7 +36,8 @@ DECLARE
   e_work uuid := gen_random_uuid();
   e_wit_a uuid := gen_random_uuid();
   e_wit_b uuid := gen_random_uuid();
-  e_unit uuid := gen_random_uuid();
+  e_unit_a uuid := gen_random_uuid();
+  e_unit_b uuid := gen_random_uuid();
   e_variant uuid := gen_random_uuid();
   e_read_a uuid := gen_random_uuid();
   e_read_b uuid := gen_random_uuid();
@@ -47,7 +48,8 @@ BEGIN
     (e_work,'work','case-textual-transmission'),
     (e_wit_a,'textual_witness','case-witness-a'),
     (e_wit_b,'textual_witness','case-witness-b'),
-    (e_unit,'textual_unit','case-unit'),
+    (e_unit_a,'textual_unit','case-unit-a'),
+    (e_unit_b,'textual_unit','case-unit-b'),
     (e_variant,'textual_variant','case-variant'),
     (e_read_a,'textual_variant_reading','case-reading-a'),
     (e_read_b,'textual_variant_reading','case-reading-b'),
@@ -60,21 +62,22 @@ BEGIN
     VALUES(e_wit_a,e_work,'manuscript',lang),(e_wit_b,e_work,'fragment',lang);
 
   INSERT INTO textual_units(id,witness_id,unit_type,label)
-    VALUES(e_unit,e_wit_a,'line','1');
+    VALUES(e_unit_a,e_wit_a,'line','1'),(e_unit_b,e_wit_b,'line','1');
 
   INSERT INTO textual_variants(id,textual_unit_id,variant_type,description,status)
-    VALUES(e_variant,e_unit,'lexical','Fixture variant','documented');
+    VALUES(e_variant,e_unit_a,'lexical','Fixture variant','documented');
 
-  INSERT INTO textual_variant_readings(id,variant_id,witness_id,reading_text,language_id)
-    VALUES(e_read_a,e_variant,e_wit_a,'reading A',lang),
-          (e_read_b,e_variant,e_wit_b,'reading B',lang);
+  INSERT INTO textual_variant_readings(
+    id,variant_id,witness_id,textual_unit_id,reading_text,language_id
+  )
+    VALUES(e_read_a,e_variant,e_wit_a,e_unit_a,'reading A',lang),
+          (e_read_b,e_variant,e_wit_b,e_unit_b,'reading B',lang);
 
   INSERT INTO translations(id,title,target_language_id)
     VALUES(e_translation,'Fixture Translation',lang);
 
   IF (SELECT count(*) FROM textual_variant_readings WHERE variant_id=e_variant) <> 2
-    THEN RAISE EXCEPTION 'Variant readings were not stored independently';
-  END IF;
+    THEN RAISE EXCEPTION 'Variant readings were not stored independently'; END IF;
 END $$;
 
 -- 4. Multiple datings must coexist and remain independently sourced.
@@ -85,12 +88,9 @@ BEGIN
   INSERT INTO works(id,title,status) VALUES(e,'Corpus Fixture: Multiple Datings','draft');
 
   INSERT INTO entities(entity_type,stable_key)
-    VALUES ('source','case-dating-source-a')
-    RETURNING id INTO s1;
-
+    VALUES ('source','case-dating-source-a') RETURNING id INTO s1;
   INSERT INTO entities(entity_type,stable_key)
-    VALUES ('source','case-dating-source-b')
-    RETURNING id INTO s2;
+    VALUES ('source','case-dating-source-b') RETURNING id INTO s2;
 
   INSERT INTO sources(id,source_type,title) VALUES
     (s1,'academic','Dating Source A'),(s2,'academic','Dating Source B');
@@ -111,8 +111,7 @@ BEGIN
     VALUES(d1,s1),(d2,s2);
 
   IF (SELECT count(*) FROM dating_assertions WHERE entity_id=e) <> 2
-    THEN RAISE EXCEPTION 'Multiple dating assertions did not coexist';
-  END IF;
+    THEN RAISE EXCEPTION 'Multiple dating assertions did not coexist'; END IF;
 END $$;
 
 -- 5. Evidence chain must remain layered.
@@ -190,8 +189,7 @@ BEGIN
     VALUES(r,a,'parallel',b,conf,'active');
 
   IF NOT EXISTS (SELECT 1 FROM relations WHERE id=r AND predicate='parallel') THEN
-    RAISE EXCEPTION 'Parallel relation was not stored';
-  END IF;
+    RAISE EXCEPTION 'Parallel relation was not stored'; END IF;
 END $$;
 
 -- 7. Cross-entity revision lineage must fail.
