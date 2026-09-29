@@ -69,31 +69,22 @@ export async function listTimelineWorks():Promise<TimelineDating[]>{
   const traditionsByWork=new Map<string,string[]>();
   for(const link of links){
     const name=traditionById.get(link.tradition_id);
-    if(!name)continue;
-    const values=traditionsByWork.get(link.work_id)||[];
-    values.push(name);
-    traditionsByWork.set(link.work_id,values);
+    if(name)traditionsByWork.set(link.work_id,[...(traditionsByWork.get(link.work_id)||[]),name]);
   }
-  return dates
-    .map(date=>{
-      const work=workById.get(date.entity_id);
-      if(!work)return null;
-      return {
-        stableKey:entityById.get(work.id)||work.id,
-        title:work.title,
-        tradition:traditionsByWork.get(work.id)?.[0]||null,
-        earliest:date.earliest??null,
-        latest:date.latest??null,
-        precision:date.precision??null,
-        method:date.dating_method??null,
-        confidence:confidenceById.get(date.confidence_id)||null,
-        notes:date.notes??null,
-        category:"corpus" as const,
-      };
-    })
-    .filter((work):work is TimelineDating => work!==null)
-    .filter(work=>work.earliest!==null||work.latest!==null)
-    .sort((a,b)=>(a.earliest??a.latest??Infinity)-(b.earliest??b.latest??Infinity));
+  const result:TimelineDating[]=[];
+  for(const date of dates){
+    const work=workById.get(date.entity_id);
+    if(!work || (date.earliest==null && date.latest==null))continue;
+    result.push({
+      stableKey:entityById.get(work.id)||work.id,title:work.title,
+      tradition:traditionsByWork.get(work.id)?.[0]||null,
+      earliest:date.earliest??null,latest:date.latest??null,
+      precision:date.precision??null,method:date.dating_method??null,
+      confidence:confidenceById.get(date.confidence_id)||null,notes:date.notes??null,
+      category:"corpus"
+    });
+  }
+  return result.sort((a,b)=>(a.earliest??a.latest??Infinity)-(b.earliest??b.latest??Infinity));
 }
 
 export async function listTimelineItems():Promise<TimelineDating[]>{
@@ -116,43 +107,46 @@ export async function listTimelineItems():Promise<TimelineDating[]>{
   const traditionsByWork=new Map<string,string[]>();
   for(const link of workLinks){
     const name=traditionById.get(link.tradition_id);
-    if(!name)continue;
-    const values=traditionsByWork.get(link.work_id)||[];
-    values.push(name);
-    traditionsByWork.set(link.work_id,values);
+    if(name)traditionsByWork.set(link.work_id,[...(traditionsByWork.get(link.work_id)||[]),name]);
   }
-  return dates
-    .map(date=>{
-      const work=workById.get(date.entity_id);
-      if(work)return {
+  const result:TimelineDating[]=[];
+  for(const date of dates){
+    if(date.earliest==null && date.latest==null)continue;
+    const work=workById.get(date.entity_id);
+    if(work){
+      result.push({
         stableKey:entityById.get(work.id)||work.id,title:work.title,
         tradition:traditionsByWork.get(work.id)?.[0]||null,
         earliest:date.earliest??null,latest:date.latest??null,
         precision:date.precision??null,method:date.dating_method??null,
         confidence:confidenceById.get(date.confidence_id)||null,notes:date.notes??null,
-        category:"corpus" as const,
-      };
-      const ev=evidenceById.get(date.entity_id);
-      if(ev)return {
+        category:"corpus"
+      });
+      continue;
+    }
+    const ev=evidenceById.get(date.entity_id);
+    if(ev){
+      result.push({
         stableKey:entityById.get(ev.id)||ev.id,title:ev.description,
         tradition:null,earliest:date.earliest??null,latest:date.latest??null,
         precision:date.precision??null,method:date.dating_method??null,
-        confidence:confidenceById.get(date.confidence_id)||null,
-        notes:date.notes??null,category:"evidence" as const,
-      };
-      const event=eventById.get(date.entity_id);
-      if(event)return {
+        confidence:confidenceById.get(date.confidence_id)||null,notes:date.notes??null,
+        category:"evidence"
+      });
+      continue;
+    }
+    const event=eventById.get(date.entity_id);
+    if(event){
+      result.push({
         stableKey:entityById.get(event.id)||event.id,title:event.title,
         tradition:null,earliest:date.earliest??null,latest:date.latest??null,
         precision:date.precision??null,method:date.dating_method??null,
-        confidence:confidenceById.get(date.confidence_id)||null,
-        notes:date.notes??null,category:"event" as const,
-      };
-      return null;
-    })
-    .filter((item):item is TimelineDating => item!==null)
-    .filter(item=>item.earliest!==null||item.latest!==null)
-    .sort((a,b)=>(a.earliest??a.latest??Infinity)-(b.earliest??b.latest??Infinity));
+        confidence:confidenceById.get(date.confidence_id)||null,notes:date.notes??null,
+        category:"event"
+      });
+    }
+  }
+  return result.sort((a,b)=>(a.earliest??a.latest??Infinity)-(b.earliest??b.latest??Infinity));
 }
 
 export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
