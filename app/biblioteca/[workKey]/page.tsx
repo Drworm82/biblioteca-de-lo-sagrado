@@ -6,7 +6,7 @@ export const dynamic="force-dynamic";
 
 function year(y:number|null){if(y===null)return"—";return y<=0?String(Math.abs(y)+1)+" a. C.":String(y)+" d. C."}
 const representationLabels:Record<string,string>={original:"Original",transliteration:"Transliteración",critical_text:"Texto crítico",close_translation:"Traducción cercana",readable_translation:"Traducción legible"};
-const provenanceLabels:Record<string,string>={base_source:"Fuente base",comparative_witness:"Testigo comparativo",reference_only:"Sólo referencia",editorial_basis:"Base editorial"};
+
 
 export default async function WorkPage({params}:{params:Promise<{workKey:string}>}){
  const {workKey}=await params;
@@ -23,7 +23,6 @@ export default async function WorkPage({params}:{params:Promise<{workKey:string}
    </section>
    <aside>
     <div className="panel"><h2>Ficha</h2><dl className="metadata"><div><dt>Estado</dt><dd>{work.status}</dd></div><div><dt>Tradiciones</dt><dd>{work.traditions.join(", ")||"—"}</dd></div><div><dt>Testigos</dt><dd>{work.witnessCount}</dd></div><div><dt>Datación</dt><dd>{work.dates.length?work.dates.map((d,i)=><div key={i}>{year(d.earliest)}–{year(d.latest)}{d.confidence?" · "+d.confidence:""}</div>):"No registrada"}</dd></div></dl></div>
-    <div className="panel"><h2>Procedencia de traducciones</h2>{work.translationProvenance.length===0?<div className="empty">No hay procedencia de traducción registrada.</div>:<div className="source-list">{work.translationProvenance.map((p,i)=><div className="source-item" key={p.translationTitle+"|"+p.sourceLabel+"|"+i}><h3>{p.translationTitle}</h3><small>{provenanceLabels[p.provenanceRole]??p.provenanceRole} · {p.sourceKind}</small><p>{p.sourceLabel??"Fuente no identificada"}{p.scopeLabel?<> · {p.scopeLabel}</>:null}</p>{p.scopePathKey?<small>Ámbito: {p.scopePathKey}</small>:null}{p.notes?<small>{p.notes}</small>:null}</div>)}</div>}</div>
     <div className="panel"><h2>Fuentes</h2>{work.sources.length===0?<div className="empty">No hay fuentes vinculadas todavía.</div>:<div className="source-list">{work.sources.map(s=><div className="source-item" key={s.title}><h3>{s.title}</h3><small>{s.author??"Autor no registrado"} · {s.sourceType}</small>{s.url?<p><a href={s.url} target="_blank" rel="noreferrer">Fuente externa</a></p>:null}</div>)}</div>}</div>
    </aside>
   </div>
