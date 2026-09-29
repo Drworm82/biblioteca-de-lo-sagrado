@@ -1,5 +1,9 @@
 BEGIN;
 
+GRANT SELECT ON evidence, historical_events TO anon, authenticated;
+
+GRANT SELECT ON relations, relation_sources, relation_evidence TO anon, authenticated;
+
 CREATE POLICY public_read_relations
     ON relations
     FOR SELECT
