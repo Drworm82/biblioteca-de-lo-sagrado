@@ -185,9 +185,9 @@ INSERT INTO translations(id,title,target_language_id,translator_notes,descriptio
  'Objeto de prueba para demostrar que una traducción es derivada y debe conservar sus fuentes base.')
 ;
 
-INSERT INTO translation_sources(translation_id,edition_id,witness_id,source_type,notes) VALUES
-(pg_temp.entity_id('translation','genesis-working-spanish'),pg_temp.entity_id('edition','rahlfs-hanhart-septuagint'),NULL,'edition','Fuente editorial griega.'),
-(pg_temp.entity_id('translation','genesis-working-spanish'),NULL,pg_temp.entity_id('witness','genesis-4q2'),'witness','Testimonio hebreo fragmentario utilizado como fuente comparativa; no implica que la traducción proceda literalmente de este fragmento.')
+INSERT INTO translation_sources(translation_id,edition_id,witness_id,source_type,provenance_role,scope_type,scope_path_key,scope_label,notes) VALUES
+(pg_temp.entity_id('translation','genesis-working-spanish'),pg_temp.entity_id('edition','rahlfs-hanhart-septuagint'),NULL,'edition','base_source','passage','genesis.1.1-9','Genesis 1:1–9','Fuente editorial griega usada como base textual de la traducción del pasaje.'),
+(pg_temp.entity_id('translation','genesis-working-spanish'),NULL,pg_temp.entity_id('witness','genesis-4q2'),'witness','comparative_witness','passage','genesis.1.1-9','Genesis 1:1–9','Testimonio hebreo fragmentario utilizado como fuente comparativa; no implica que la traducción proceda literalmente de este fragmento.')
 ;
 
 INSERT INTO textual_units(id,parent_id,witness_id,translation_id,unit_type,label,ordinal,path_key) VALUES
@@ -261,9 +261,9 @@ INSERT INTO translations(id,title,target_language_id,translator_notes,descriptio
  'Objeto derivado para probar la separación entre texto antiguo y traducción.')
 ;
 
-INSERT INTO translation_sources(translation_id,witness_id,source_type,notes) VALUES
-(pg_temp.entity_id('translation','matthew-24-3-working-spanish'),pg_temp.entity_id('witness','matthew-sinaiticus-24-3'),'witness','Base textual de prueba.'),
-(pg_temp.entity_id('translation','matthew-24-3-working-spanish'),pg_temp.entity_id('witness','matthew-vaticanus-24-3'),'witness','Segunda base textual de prueba para comparar decisiones.')
+INSERT INTO translation_sources(translation_id,witness_id,source_type,provenance_role,scope_type,scope_path_key,scope_label,notes) VALUES
+(pg_temp.entity_id('translation','matthew-24-3-working-spanish'),pg_temp.entity_id('witness','matthew-sinaiticus-24-3'),'witness','base_source','passage','matthew.24.3','Mateo 24:3','Base textual de prueba para la traducción de Mateo 24:3.'),
+(pg_temp.entity_id('translation','matthew-24-3-working-spanish'),pg_temp.entity_id('witness','matthew-vaticanus-24-3'),'witness','comparative_witness','passage','matthew.24.3','Mateo 24:3','Segunda base textual de prueba utilizada para comparar decisiones de traducción.')
 ;
 
 -- ---------------------------------------------------------------------------
