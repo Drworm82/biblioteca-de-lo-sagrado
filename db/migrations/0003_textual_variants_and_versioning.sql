@@ -15,6 +15,10 @@ ALTER TABLE dating_assertions
     ADD CONSTRAINT dating_assertions_chronology_basis_ck
     CHECK (chronology_basis IN ('astronomical_year', 'relative', 'unknown'));
 
+ALTER TABLE textual_units
+    ADD CONSTRAINT textual_units_id_witness_uq
+    UNIQUE(id, witness_id);
+
 CREATE TABLE textual_variants (
     id uuid PRIMARY KEY REFERENCES entities(id) ON DELETE RESTRICT,
     textual_unit_id uuid NOT NULL REFERENCES textual_units(id) ON DELETE RESTRICT,
