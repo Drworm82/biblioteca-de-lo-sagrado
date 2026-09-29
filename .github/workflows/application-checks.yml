@@ -8,6 +8,19 @@ on:
 jobs:
   nextjs:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: biblioteca_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d biblioteca_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -15,4 +28,44 @@ jobs:
           node-version: 20
       - run: npm install
       - run: npm run typecheck
+      - name: Apply database migrations
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0001_initial_schema.sql
+          psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0002_schema_integrity_patch.sql
+          psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0003_textual_variants_and_versioning.sql
+          psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0004_textual_unit_contents.sql
+      - name: Seed application reader corpus
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f data/seed/historical_corpus.sql
+          psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f data/seed/reader_demo.sql
       - run: npm run build
+      - name: Start Next.js
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/biblioteca_test
+        run: |
+          npm run start > /tmp/biblioteca-next.log 2>&1 &
+          echo $! > /tmp/biblioteca-next.pid
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:3000/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/biblioteca-next.log
+          exit 1
+      - name: Exercise reader route
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/biblioteca_test
+        run: |
+          curl -fsS http://localhost:3000/biblioteca/gospel-of-matthew > /tmp/reader.html
+          grep -F "Εἰπον ἡμῖν" /tmp/reader.html
+          grep -F "Eipon hēmin" /tmp/reader.html
+          grep -F "Manuscript GA 019 — Codex Regius" /tmp/reader.html
+          grep -F "Variantes registradas" /tmp/reader.html
+      - name: Dump Next.js logs on failure
+        if: failure()
+        run: cat /tmp/biblioteca-next.log
