@@ -44,6 +44,14 @@ export default async function AtlasDetailPage({params}:{params:Promise<{kind:str
           {detail.dates.length===0?<div className="empty">No hay una datación registrada.</div>:<div className="unit-list">{detail.dates.map((d,i)=><div className="unit" key={i}><h3>{range(d.earliest,d.latest)}</h3><small>{[d.precision,d.method,d.confidence].filter(Boolean).join(" · ")||"Afirmación de datación"}</small>{d.notes?<p>{d.notes}</p>:null}</div>)}</div>}
           <p className="lead atlas-note">Las distintas afirmaciones de datación se conservan por separado. Una entrada de la cronología no implica que exista una única fecha aceptada.</p>
         </div>
+        {detail.kind==="evidence" ? <div className="panel">
+          <h2>Cadena de razonamiento</h2>
+          <p className="lead atlas-note">La ficha separa lo observado de las afirmaciones, interpretaciones e hipótesis construidas a partir de la evidencia.</p>
+          {detail.claims.length>0?<div className="unit-list"><h3>Afirmaciones</h3>{detail.claims.map(x=><div className="unit" key={"claim-"+x.stableKey}><small>Afirmación · {x.status}{x.confidence?" · "+x.confidence:""}</small><h3>{x.title}</h3><p>{x.statement}</p>{x.notes?<small>{x.notes}</small>:null}</div>)}</div>:null}
+          {detail.interpretations.length>0?<div className="unit-list"><h3>Interpretaciones</h3>{detail.interpretations.map(x=><div className="unit" key={"interpretation-"+x.stableKey}><small>Interpretación · {x.status}{x.confidence?" · "+x.confidence:""}</small><h3>{x.title}</h3><p>{x.statement}</p>{x.notes?<small>{x.notes}</small>:null}</div>)}</div>:null}
+          {detail.hypotheses.length>0?<div className="unit-list"><h3>Hipótesis</h3>{detail.hypotheses.map(x=><div className="unit" key={"hypothesis-"+x.stableKey}><small>Hipótesis · {x.status}{x.confidence?" · "+x.confidence:""}</small><h3>{x.title}</h3><p>{x.statement}</p>{x.notes?<small>{x.notes}</small>:null}</div>)}</div>:null}
+          {detail.claims.length===0&&detail.interpretations.length===0&&detail.hypotheses.length===0?<div className="empty">Todavía no hay afirmaciones, interpretaciones o hipótesis vinculadas a esta evidencia.</div>:null}
+        </div>:null}
         <div className="panel">
           <h2>Relaciones registradas</h2>
           {detail.relations.length===0?<div className="empty">No hay relaciones registradas todavía.</div>:<div className="unit-list">{detail.relations.map((r,i)=><div className="unit" key={r.stableKey+"|"+r.relation+"|"+i}><small>{r.direction==="hacia"?"Relación hacia":"Relación desde"} · {r.relation}</small>{r.href?<Link href={r.href}><h3>{r.label} →</h3></Link>:<h3>{r.label}</h3>}<small>{[r.entityType,r.confidence,r.status].filter(Boolean).join(" · ")}</small>{r.notes?<p>{r.notes}</p>:null}</div>)}</div>}
