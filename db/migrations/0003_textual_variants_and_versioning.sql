@@ -15,8 +15,6 @@ ALTER TABLE dating_assertions
     ADD CONSTRAINT dating_assertions_chronology_basis_ck
     CHECK (chronology_basis IN ('astronomical_year', 'relative', 'unknown'));
 
--- A textual variant is anchored to a specific textual unit.
--- It represents an editorially recognized location at which witnesses differ.
 CREATE TABLE textual_variants (
     id uuid PRIMARY KEY REFERENCES entities(id) ON DELETE RESTRICT,
     textual_unit_id uuid NOT NULL REFERENCES textual_units(id) ON DELETE RESTRICT,
@@ -62,10 +60,8 @@ CREATE TABLE textual_variant_reading_sources (
     UNIQUE(reading_id, source_id, source_location_id)
 );
 
--- Revision lineage must remain inside the same entity.
-ALTER TABLE revisions
-    ADD CONSTRAINT revisions_entity_id_id_uq UNIQUE(entity_id, id);
-
+-- 0001 already established UNIQUE(entity_id, id), which is required
+-- for this composite foreign key. Only add the cross-row integrity rule.
 ALTER TABLE revisions
     ADD CONSTRAINT revisions_previous_same_entity_fk
     FOREIGN KEY(entity_id, previous_revision_id)
