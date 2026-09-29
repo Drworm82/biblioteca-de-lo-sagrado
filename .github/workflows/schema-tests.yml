@@ -1,5 +1,6 @@
 name: Schema tests
 # Reader integration validation is part of the PostgreSQL test pipeline.
+# Reader seed is intentionally validated against the same migration chain as production data.
 
 on:
   push:
