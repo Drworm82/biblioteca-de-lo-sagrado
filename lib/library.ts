@@ -1,101 +1,172 @@
 import "server-only";
-import {sql} from "drizzle-orm";
-import {getDb} from "@/lib/db";
+import {createClient} from "@supabase/supabase-js";
+
+function getSupabase(){
+  const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if(!url||!key) throw new Error("Supabase is not configured.");
+  return createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+}
+
+async function read<T=any>(query:PromiseLike<{data:T|null;error:any}>):Promise<T>{
+  const {data,error}=await query;
+  if(error) throw new Error(`Supabase query failed: ${error.message}`);
+  return (data??[]) as T;
+}
+
+async function readIn<T=any>(table:string,column:string,ids:string[]):Promise<T[]>{
+  if(ids.length===0)return [];
+  return read<T[]>(getSupabase().from(table).select("*").in(column,ids));
+}
 
 export type WorkListItem={stableKey:string;title:string;description:string|null;status:string;tradition:string|null;witnessCount:number};
 export type ReaderContent={representationType:string;textContent:string;normalizedText:string|null;sourceTitle:string|null;sourceUrl:string|null;notes:string|null};
 export type ReaderVariant={unitKey:string;variantType:string;description:string|null;status:string;witnessLabel:string|null;readingText:string;normalizedText:string|null;notes:string|null;sourceTitle:string|null};
-export type TranslationProvenance={translationTitle:string;provenanceRole:string;scopeType:string;scopePathKey:string|null;scopeLabel:string|null;sourceKind:string;sourceLabel:string|null;notes:string|null};
 export type ReaderUnit={stableKey:string;label:string|null;unitType:string;pathKey:string|null;witnessLabel:string|null;translationTitle:string|null;contents:ReaderContent[];variants:ReaderVariant[]};
-export type WorkDetail=WorkListItem&{workId:string;traditions:string[];dates:Array<{earliest:number|null;latest:number|null;precision:string|null;method:string|null;confidence:string|null;notes:string|null}>;witnesses:Array<{stableKey:string;label:string|null;type:string;language:string|null;script:string|null;dateNote:string|null}>;units:ReaderUnit[];translationProvenance:TranslationProvenance[];sources:Array<{title:string;sourceType:string;author:string|null;url:string|null;notes:string|null}>};
+export type WorkDetail=WorkListItem&{workId:string;traditions:string[];dates:Array<{earliest:number|null;latest:number|null;precision:string|null;method:string|null;confidence:string|null;notes:string|null}>;witnesses:Array<{stableKey:string;label:string|null;type:string;language:string|null;script:string|null;dateNote:string|null}>;units:ReaderUnit[];sources:Array<{title:string;sourceType:string;author:string|null;url:string|null;notes:string|null}>};
 
 export async function listWorks():Promise<WorkListItem[]>{
- const rows=await getDb().execute(sql`
- SELECT e.stable_key AS "stableKey",w.title,w.description,w.status,MIN(t.name) AS tradition,COUNT(DISTINCT tw.id)::int AS "witnessCount"
- FROM works w JOIN entities e ON e.id=w.id LEFT JOIN work_traditions wt ON wt.work_id=w.id LEFT JOIN traditions t ON t.id=wt.tradition_id LEFT JOIN textual_witnesses tw ON tw.work_id=w.id
- GROUP BY e.stable_key,w.title,w.description,w.status ORDER BY w.title;
- `);
- return rows as unknown as WorkListItem[];
+  const supabase=getSupabase();
+  const [works,entities,links]=await Promise.all([
+    read<any[]>(supabase.from("works").select("id,title,description,status").order("title")),
+    read<any[]>(supabase.from("entities").select("id,stable_key").eq("entity_type","work")),
+    read<any[]>(supabase.from("work_traditions").select("work_id,tradition_id"))
+  ]);
+  const workIds=works.map(w=>w.id);
+  const [traditions,witnesses]=await Promise.all([
+    read<any[]>(supabase.from("traditions").select("id,name")),
+    readIn<any>("textual_witnesses","work_id",workIds)
+  ]);
+  const entityById=new Map(entities.map(e=>[e.id,e.stable_key]));
+  const traditionById=new Map(traditions.map(t=>[t.id,t.name]));
+  const linksByWork=new Map<string,string[]>();
+  for(const l of links){const a=linksByWork.get(l.work_id)??[];const n=traditionById.get(l.tradition_id);if(n)a.push(n);linksByWork.set(l.work_id,a);}
+  const witnessCount=new Map<string,number>();
+  for(const w of witnesses)witnessCount.set(w.work_id,(witnessCount.get(w.work_id)??0)+1);
+  return works.map(w=>({stableKey:entityById.get(w.id)??w.id,title:w.title,description:w.description,status:w.status,tradition:linksByWork.get(w.id)?.[0]??null,witnessCount:witnessCount.get(w.id)??0}));
 }
 
 export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
- const [wr,tr,dr,wi,un,tp,sr]=await Promise.all([
-  getDb().execute(sql`SELECT e.id AS "workId",e.stable_key AS "stableKey",w.title,w.description,w.status,COUNT(DISTINCT tw.id)::int AS "witnessCount",MIN(t.name) AS tradition FROM works w JOIN entities e ON e.id=w.id LEFT JOIN work_traditions wt ON wt.work_id=w.id LEFT JOIN traditions t ON t.id=wt.tradition_id LEFT JOIN textual_witnesses tw ON tw.work_id=w.id WHERE e.entity_type='work' AND e.stable_key=${stableKey} GROUP BY e.id,e.stable_key,w.title,w.description,w.status;`),
-  getDb().execute(sql`SELECT t.name FROM work_traditions wt JOIN traditions t ON t.id=wt.tradition_id JOIN entities e ON e.id=wt.work_id WHERE e.stable_key=${stableKey} ORDER BY t.name;`),
-  getDb().execute(sql`SELECT da.earliest,da.latest,da.precision,da.dating_method AS method,cl.label AS confidence,da.notes FROM dating_assertions da JOIN entities e ON e.id=da.entity_id LEFT JOIN confidence_levels cl ON cl.id=da.confidence_id WHERE e.stable_key=${stableKey} ORDER BY da.earliest NULLS LAST;`),
-  getDb().execute(sql`SELECT e.stable_key AS "stableKey",tw.title_or_label AS label,tw.witness_type AS type,l.name AS language,s.name AS script,tw.date_note AS "dateNote" FROM textual_witnesses tw JOIN entities e ON e.id=tw.id LEFT JOIN languages l ON l.id=tw.language_id LEFT JOIN scripts s ON s.id=tw.script_id JOIN entities we ON we.id=tw.work_id WHERE we.stable_key=${stableKey} ORDER BY tw.title_or_label;`),
-  getDb().execute(sql`
-   SELECT DISTINCT e.stable_key AS "stableKey",tu.label,tu.unit_type AS "unitType",tu.path_key AS "pathKey",tu.ordinal AS "_ordinal",
-          tw.title_or_label AS "witnessLabel",tr.title AS "translationTitle"
-   FROM textual_units tu
-   JOIN entities e ON e.id=tu.id
-   LEFT JOIN textual_witnesses tw ON tw.id=tu.witness_id
-   LEFT JOIN translations tr ON tr.id=tu.translation_id
-   LEFT JOIN translation_sources ts ON ts.translation_id=tr.id
-   LEFT JOIN textual_witnesses translation_witness ON translation_witness.id=ts.witness_id
-   JOIN works w ON w.id=COALESCE(tw.work_id,translation_witness.work_id)
-   JOIN entities we ON we.id=w.id
-   WHERE we.stable_key=${stableKey}
-   ORDER BY tu.ordinal NULLS LAST,tu.path_key;
-  `),
-  getDb().execute(sql`
-   SELECT DISTINCT tr.title AS "translationTitle",ts.provenance_role AS "provenanceRole",
-          ts.scope_type AS "scopeType",ts.scope_path_key AS "scopePathKey",ts.scope_label AS "scopeLabel",
-          CASE WHEN ts.witness_id IS NOT NULL THEN 'witness' ELSE 'edition' END AS "sourceKind",
-          COALESCE(tw.title_or_label,ed.title) AS "sourceLabel",ts.notes
-   FROM translation_sources ts
-   JOIN translations tr ON tr.id=ts.translation_id
-   LEFT JOIN textual_witnesses tw ON tw.id=ts.witness_id
-   LEFT JOIN editions ed ON ed.id=ts.edition_id
-   LEFT JOIN edition_witnesses ew ON ew.edition_id=ed.id
-   LEFT JOIN textual_witnesses edition_witness ON edition_witness.id=ew.witness_id
-   JOIN entities te ON te.id=tr.id
-   JOIN works w ON w.id=COALESCE(tw.work_id,edition_witness.work_id)
-   JOIN entities we ON we.id=w.id
-   WHERE we.stable_key=${stableKey}
-   ORDER BY tr.title,ts.provenance_role,ts.scope_path_key,COALESCE(tw.title_or_label,ed.title);
-  `),
-  getDb().execute(sql`SELECT DISTINCT s.title,s.source_type AS "sourceType",s.author_text AS author,s.url,s.notes FROM sources s JOIN work_traditions wt ON wt.source_id=s.id JOIN entities e ON e.id=wt.work_id WHERE e.stable_key=${stableKey} ORDER BY s.title;`)
- ]);
- const work=(wr as unknown as WorkDetail[])[0]; if(!work)return null;
- const [cr,rr]=await Promise.all([
-  getDb().execute(sql`
-   SELECT u.stable_key AS "unitKey",tuc.representation_type AS "representationType",tuc.text_content AS "textContent",
-          tuc.normalized_text AS "normalizedText",s.title AS "sourceTitle",s.url AS "sourceUrl",tuc.notes
-   FROM textual_unit_contents tuc
-   JOIN textual_units tu ON tu.id=tuc.textual_unit_id
-   JOIN entities u ON u.id=tu.id
-   LEFT JOIN textual_witnesses tw ON tw.id=tu.witness_id
-   LEFT JOIN translations tr ON tr.id=tu.translation_id
-   LEFT JOIN translation_sources ts ON ts.translation_id=tr.id
-   LEFT JOIN textual_witnesses translation_witness ON translation_witness.id=ts.witness_id
-   JOIN works w ON w.id=COALESCE(tw.work_id,translation_witness.work_id)
-   JOIN entities we ON we.id=w.id
-   LEFT JOIN sources s ON s.id=tuc.source_id
-   WHERE we.stable_key=${stableKey}
-   ORDER BY u.stable_key,tuc.representation_type;
-  `),
-  getDb().execute(sql`
-   SELECT uv.stable_key AS "unitKey",tv.variant_type AS "variantType",tv.description,tv.status,
-          tw.title_or_label AS "witnessLabel",tvr.reading_text AS "readingText",
-          tvr.normalized_text AS "normalizedText",tvr.notes,s.title AS "sourceTitle"
-   FROM textual_variant_readings tvr
-   JOIN textual_variants tv ON tv.id=tvr.variant_id
-   JOIN entities uv ON uv.id=tv.textual_unit_id
-   JOIN textual_witnesses tw ON tw.id=tvr.witness_id
-   LEFT JOIN textual_variant_reading_sources tvrs ON tvrs.reading_id=tvr.id
-   LEFT JOIN sources s ON s.id=tvrs.source_id
-   JOIN entities work_entity ON work_entity.id=tw.work_id
-   WHERE work_entity.stable_key=${stableKey}
-   ORDER BY uv.stable_key,tv.variant_type,tvr.reading_text,tw.title_or_label;
-  `)
- ]);
- const contentRows=cr as unknown as Array<ReaderContent & {unitKey:string}>;
- const readingRows=rr as unknown as ReaderVariant[];
- const byUnit=new Map<string,ReaderContent[]>();
- for(const row of contentRows){const list=byUnit.get(row.unitKey)??[];list.push(row);byUnit.set(row.unitKey,list);}
- const variantByUnit=new Map<string,ReaderVariant[]>();
- for(const row of readingRows){const list=variantByUnit.get(row.unitKey)??[];list.push(row);variantByUnit.set(row.unitKey,list);}
- const baseUnits=un as unknown as Array<Omit<ReaderUnit,"contents"|"variants">>;
- return {...work,traditions:(tr as unknown as Array<{name:string}>).map(r=>r.name),dates:dr as unknown as WorkDetail["dates"],witnesses:wi as unknown as WorkDetail["witnesses"],units:baseUnits.map(u=>({...u,contents:byUnit.get(u.stableKey)??[],variants:variantByUnit.get(u.stableKey)??[]})),translationProvenance:tp as unknown as TranslationProvenance[],sources:sr as unknown as WorkDetail["sources"]};
+  const supabase=getSupabase();
+  const [entities]=await Promise.all([
+    read<any[]>(supabase.from("entities").select("id,stable_key").eq("entity_type","work").eq("stable_key",stableKey).limit(1))
+  ]);
+  const entity=entities[0];
+  if(!entity)return null;
+  const workId=entity.id;
+  const workRows=await read<any[]>(supabase.from("works").select("id,title,description,status").eq("id",workId).limit(1));
+  const work=workRows[0];
+  if(!work)return null;
+
+  const [tradLinks,witnesses,dates,units,sourceLinks]=await Promise.all([
+    read<any[]>(supabase.from("work_traditions").select("tradition_id,source_id").eq("work_id",workId)),
+    read<any[]>(supabase.from("textual_witnesses").select("id,title_or_label,witness_type,language_id,script_id,date_note").eq("work_id",workId).order("title_or_label")),
+    read<any[]>(supabase.from("dating_assertions").select("earliest,latest,precision,dating_method,confidence_id,notes").eq("entity_id",workId).order("earliest")),
+    read<any[]>(supabase.from("textual_units").select("id,witness_id,translation_id,unit_type,label,ordinal,path_key").order("ordinal",{ascending:true,nullsFirst:false}).order("path_key")),
+    read<any[]>(supabase.from("work_traditions").select("source_id").eq("work_id",workId).not("source_id","is",null))
+  ]);
+
+  const witnessIds=witnesses.map(w=>w.id);
+  const witnessUnitRows=await readIn<any>("textual_units","witness_id",witnessIds);
+  const translationIds=[...new Set(units.filter(u=>u.translation_id).map(u=>u.translation_id))];
+  const [traditions,languages,scripts,confidence,translations,translationSources,editionWitnesses,unitEntities]=await Promise.all([
+    readIn<any>("traditions","id",tradLinks.map(x=>x.tradition_id)),
+    readIn<any>("languages","id",witnesses.map(w=>w.language_id).filter(Boolean)),
+    readIn<any>("scripts","id",witnesses.map(w=>w.script_id).filter(Boolean)),
+    readIn<any>("confidence_levels","id",dates.map(d=>d.confidence_id).filter(Boolean)),
+    readIn<any>("translations","id",translationIds),
+    readIn<any>("translation_sources","translation_id",translationIds),
+    readIn<any>("edition_witnesses","witness_id",witnessIds),
+    readIn<any>("entities","id",[...new Set([...witnessIds,...units.map(u=>u.id)])])
+  ]);
+
+  const relevantTranslationIds=new Set(
+    translationSources
+      .filter(ts=>witnessIds.includes(ts.witness_id) || editionWitnesses.some(ew=>ew.edition_id===ts.edition_id && witnessIds.includes(ew.witness_id)))
+      .map(ts=>ts.translation_id)
+  );
+  const readerUnits=[...witnessUnitRows,...units.filter(u=>u.translation_id&&relevantTranslationIds.has(u.translation_id))];
+  const unitIds=[...new Set(readerUnits.map(u=>u.id))];
+  const [contents,variants]=await Promise.all([
+    readIn<any>("textual_unit_contents","textual_unit_id",unitIds),
+    readIn<any>("textual_variants","textual_unit_id",witnessUnitRows.map(u=>u.id))
+  ]);
+  const readings=await readIn<any>("textual_variant_readings","variant_id",variants.map(v=>v.id));
+  const readingSources=await readIn<any>("textual_variant_reading_sources","reading_id",readings.map(r=>r.id));
+  const sourceIds=[...new Set([
+    ...sourceLinks.map(x=>x.source_id).filter(Boolean),
+    ...contents.map(c=>c.source_id).filter(Boolean),
+    ...readingSources.map(x=>x.source_id).filter(Boolean)
+  ])];
+  const sources=await readIn<any>("sources","id",sourceIds);
+
+  const entityById=new Map(unitEntities.map(e=>[e.id,e.stable_key]));
+  const sourceById=new Map(sources.map(s=>[s.id,s]));
+  const languageById=new Map(languages.map(x=>[x.id,x.name]));
+  const scriptById=new Map(scripts.map(x=>[x.id,x.name]));
+  const confidenceById=new Map(confidence.map(x=>[x.id,x.label]));
+  const witnessById=new Map(witnesses.map(w=>[w.id,w]));
+  const translationById=new Map(translations.map(t=>[t.id,t]));
+  const contentByUnit=new Map<string,any[]>();
+  for(const c of contents){const a=contentByUnit.get(c.textual_unit_id)??[];a.push(c);contentByUnit.set(c.textual_unit_id,a);}
+  const variantMap=new Map(variants.map(v=>[v.id,v]));
+  const sourceByReading=new Map<string,string>();
+  for(const rs of readingSources){const s=sourceById.get(rs.source_id);if(s)sourceByReading.set(rs.reading_id,s.title);}
+  const variantByUnit=new Map<string,any[]>();
+  for(const r of readings){
+    const v=variantMap.get(r.variant_id);
+    if(!v)continue;
+    const a=variantByUnit.get(v.textual_unit_id)??[];
+    a.push({variant:v,reading:r,sourceTitle:sourceByReading.get(r.id)??null});
+    variantByUnit.set(v.textual_unit_id,a);
+  }
+
+  const unitsOut:ReaderUnit[]=readerUnits
+    .sort((a,b)=>(a.ordinal??999999)-(b.ordinal??999999))
+    .map(u=>{
+      const witness=u.witness_id?witnessById.get(u.witness_id):null;
+      const translation=u.translation_id?translationById.get(u.translation_id):null;
+      return {
+        stableKey:entityById.get(u.id)??u.id,
+        label:u.label,
+        unitType:u.unit_type,
+        pathKey:u.path_key,
+        witnessLabel:witness?.title_or_label??null,
+        translationTitle:translation?.title??null,
+        contents:(contentByUnit.get(u.id)??[]).map(c=>({
+          representationType:c.representation_type,
+          textContent:c.text_content,
+          normalizedText:c.normalized_text,
+          sourceTitle:c.source_id?sourceById.get(c.source_id)?.title??null:null,
+          sourceUrl:c.source_id?sourceById.get(c.source_id)?.url??null:null,
+          notes:c.notes
+        })),
+        variants:(variantByUnit.get(u.id)??[]).map(x=>({
+          unitKey:entityById.get(u.id)??u.id,
+          variantType:x.variant.variant_type,
+          description:x.variant.description,
+          status:x.variant.status,
+          witnessLabel:witnessById.get(x.reading.witness_id)?.title_or_label??null,
+          readingText:x.reading.reading_text,
+          normalizedText:x.reading.normalized_text,
+          notes:x.reading.notes,
+          sourceTitle:x.sourceTitle
+        }))
+      };
+    });
+
+  return {
+    stableKey,
+    title:work.title,
+    description:work.description,
+    status:work.status,
+    tradition:traditions[0]?.name??null,
+    witnessCount:witnesses.length,
+    workId,
+    traditions:traditions.map(t=>t.name),
+    dates:dates.map(d=>({earliest:d.earliest,latest:d.latest,precision:d.precision,method:d.dating_method,confidence:confidenceById.get(d.confidence_id)??null,notes:d.notes})),
+    witnesses:witnesses.map(w=>({stableKey:entityById.get(w.id)??w.id,label:w.title_or_label,type:w.witness_type,language:languageById.get(w.language_id)??null,script:scriptById.get(w.script_id)??null,dateNote:w.date_note})),
+    units:unitsOut,
+    sources:sources.filter(s=>sourceLinks.some(x=>x.source_id===s.id)).map(s=>({title:s.title,sourceType:s.source_type,author:s.author_text,url:s.url,notes:s.notes}))
+  };
 }
