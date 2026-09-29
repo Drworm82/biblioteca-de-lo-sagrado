@@ -23,7 +23,7 @@ export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
   getDb().execute(sql`SELECT da.earliest,da.latest,da.precision,da.dating_method AS method,cl.label AS confidence,da.notes FROM dating_assertions da JOIN entities e ON e.id=da.entity_id LEFT JOIN confidence_levels cl ON cl.id=da.confidence_id WHERE e.stable_key=${stableKey} ORDER BY da.earliest NULLS LAST;`),
   getDb().execute(sql`SELECT e.stable_key AS "stableKey",tw.title_or_label AS label,tw.witness_type AS type,l.name AS language,s.name AS script,tw.date_note AS "dateNote" FROM textual_witnesses tw JOIN entities e ON e.id=tw.id LEFT JOIN languages l ON l.id=tw.language_id LEFT JOIN scripts s ON s.id=tw.script_id JOIN entities we ON we.id=tw.work_id WHERE we.stable_key=${stableKey} ORDER BY tw.title_or_label;`),
   getDb().execute(sql`
-   SELECT DISTINCT e.stable_key AS "stableKey",tu.label,tu.unit_type AS "unitType",tu.path_key AS "pathKey",
+   SELECT DISTINCT e.stable_key AS "stableKey",tu.label,tu.unit_type AS "unitType",tu.path_key AS "pathKey",tu.ordinal AS "_ordinal",
           tw.title_or_label AS "witnessLabel",tr.title AS "translationTitle"
    FROM textual_units tu
    JOIN entities e ON e.id=tu.id
