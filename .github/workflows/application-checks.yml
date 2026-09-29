@@ -65,7 +65,14 @@ jobs:
           grep -F "Εἰπον ἡμῖν" /tmp/reader.html
           grep -F "Eipon hēmin" /tmp/reader.html
           grep -F "Manuscript GA 019 — Codex Regius" /tmp/reader.html
-          grep -F "Variantes registradas" /tmp/reader.html
+          grep -F "Comparación de variantes" /tmp/reader.html
+          grep -F "Variante: lexical_form" /tmp/reader.html
+          grep -F "Codex Sinaiticus, Matthew 24:3" /tmp/reader.html
+          grep -F "Codex Vaticanus, Matthew 24:3" /tmp/reader.html
+          grep -F "Codex Ephraemi Syri Rescriptus, Matthew 24:3" /tmp/reader.html
+          grep -F "Codex Regius (GA 019), Matthew 24:3" /tmp/reader.html
+          grep -F "ειπε ημιν" /tmp/reader.html
+          grep -F "ειπον ημιν" /tmp/reader.html
           grep -F "Mateo 24:4" /tmp/reader.html
           grep -F "Tengan cuidado de que nadie los engañe" /tmp/reader.html
           grep -F "Mateo 24:5" /tmp/reader.html
