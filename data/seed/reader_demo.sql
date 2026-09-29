@@ -2,11 +2,28 @@
 -- Uses only a short, explicitly identified textual sample.
 BEGIN;
 
+CREATE FUNCTION pg_temp.entity_id(p_type text, p_key text)
+RETURNS uuid
+LANGUAGE plpgsql
+AS $$
+DECLARE v_id uuid;
+BEGIN
+  SELECT id INTO v_id
+  FROM entities
+  WHERE entity_type = p_type AND stable_key = p_key;
+
+  IF v_id IS NULL THEN
+    RAISE EXCEPTION 'Reader demo entity not found: % / %', p_type, p_key;
+  END IF;
+
+  RETURN v_id;
+END $$;
+
 INSERT INTO textual_unit_contents(
     id,textual_unit_id,representation_type,text_content,normalized_text,source_id,notes
 ) VALUES
 (
-    pg_temp.entity_id('unit_content','matthew-24-3-regius-original'),
+    gen_random_uuid(),
     pg_temp.entity_id('unit','matthew-24-3-regius'),
     'original',
     'Εἰπον ἡμῖν',
@@ -15,7 +32,7 @@ INSERT INTO textual_unit_contents(
     'Short witness-level sample used by the textual-variant reader; it is not presented as the complete verse.'
 ),
 (
-    pg_temp.entity_id('unit_content','matthew-24-3-regius-transliteration'),
+    gen_random_uuid(),
     pg_temp.entity_id('unit','matthew-24-3-regius'),
     'transliteration',
     'Eipon hēmin',
