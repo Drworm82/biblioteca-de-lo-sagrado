@@ -10,6 +10,7 @@ type TimelineItem = {
   href?: string;
   source: "editorial" | "library";
   sortYear: number;
+  category: "evidence" | "archaeology" | "tradition" | "corpus" | "event";
 };
 
 function formatYear(year: number|null): string {
@@ -39,6 +40,7 @@ function workToTimelineItem(work: TimelineDating): TimelineItem {
     href: "/biblioteca/" + work.stableKey,
     source: "library",
     sortYear: work.earliest ?? work.latest ?? Number.POSITIVE_INFINITY,
+    category: evidence ? "evidence" : "corpus",
   };
 }
 
@@ -47,6 +49,7 @@ const editorialTimeline: TimelineItem[] =[
     date: "c. 100.000 a.C.",
     type: "Evidencia",
     title: "Los primeros indicios de lo sagrado",
+    category: "evidence",
     text: "Enterramientos, pigmentos, objetos y otros comportamientos del Paleolítico permiten estudiar cómo las comunidades humanas trataban la muerte y los espacios especiales. La interpretación de estas evidencias permanece abierta.",
     meta: "Prehistoria · evidencia arqueológica",
   },
@@ -54,6 +57,7 @@ const editorialTimeline: TimelineItem[] =[
     date: "c. 9600–8200 a.C.",
     type: "Arqueología",
     title: "Göbekli Tepe",
+    category: "archaeology",
     text: "Un complejo monumental del Neolítico temprano con pilares decorados y espacios construidos. Es una ventana excepcional a la organización social y ritual de comunidades anteriores a la escritura.",
     meta: "Anatolia · Neolítico",
   },
@@ -61,6 +65,7 @@ const editorialTimeline: TimelineItem[] =[
     date: "c. 3000–500 a.C.",
     type: "Tradiciones y textos",
     title: "Mesopotamia",
+    category: "tradition",
     text: "Himnos, plegarias, mitos y textos rituales conservan una de las tradiciones escritas más antiguas. Aquí aparecen corpus que más tarde podremos comparar con otras tradiciones del Cercano Oriente.",
     meta: "Sumer · Acad · Babilonia · Asiria",
   },
@@ -68,6 +73,7 @@ const editorialTimeline: TimelineItem[] =[
     date: "c. 3000–30 a.C.",
     type: "Tradiciones y textos",
     title: "Egipto",
+    category: "tradition",
     text: "Los Textos de las Pirámides, Textos de los Sarcófagos, himnos y otros corpus muestran una tradición escrita desarrollada durante milenios, con transformaciones internas y múltiples contextos.",
     meta: "Valle del Nilo · escritura jeroglífica y hierática",
   },
@@ -75,6 +81,7 @@ const editorialTimeline: TimelineItem[] =[
     date: "c. 1500–300 a.C.",
     type: "Tradiciones y textos",
     title: "Levante y mundo ugarítico",
+    category: "tradition",
     text: "Los textos del Levante permiten estudiar deidades, rituales y conceptos religiosos dentro de sus propios contextos lingüísticos e históricos, antes de establecer cualquier relación con tradiciones posteriores.",
     meta: "Canaán · Ugarit · lenguas semíticas",
   },
@@ -82,6 +89,7 @@ const editorialTimeline: TimelineItem[] =[
     date: "c. 1500–300 a.C.",
     type: "Tradiciones y textos",
     title: "India védica y postvédica",
+    category: "tradition",
     text: "Los Vedas, Brahmanas, Aranyakas y Upanishads forman capas textuales de una larga tradición. Sus fechas de composición y transmisión deben distinguirse de las fechas de los manuscritos conservados.",
     meta: "India · sánscrito védico y sánscrito",
   },
@@ -89,6 +97,7 @@ const editorialTimeline: TimelineItem[] =[
     date: "c. 1200–900 a.C.",
     type: "Religión israelita antigua",
     title: "Los primeros israelitas",
+    category: "tradition",
     text: "La religión de los primeros grupos israelitas debe estudiarse dentro del paisaje religioso del Levante. Inscripciones, asentamientos, objetos y textos posteriores permiten reconstruir un panorama que no debe proyectarse automáticamente desde el monoteísmo judío posterior.",
     meta: "Canaán · primeros reinos y comunidades israelitas",
   },
@@ -96,6 +105,7 @@ const editorialTimeline: TimelineItem[] =[
     date: "c. 1000–586 a.C.",
     type: "Religión israelita antigua",
     title: "Israel y Judá",
+    category: "tradition",
     text: "Durante las monarquías de Israel y Judá coexistieron distintas prácticas, santuarios y concepciones sobre lo divino. La evidencia textual y arqueológica permite estudiar procesos de centralización, reforma y transformación religiosa.",
     meta: "Reinos de Israel y Judá · Jerusalén · santuarios locales",
   },
@@ -103,6 +113,7 @@ const editorialTimeline: TimelineItem[] =[
     date: "c. 800–300 a.C.",
     type: "Tradiciones y textos",
     title: "Grecia",
+    category: "tradition",
     text: "Homero, Hesíodo y los himnos transmiten distintas formas de pensamiento religioso griego. La comparación con otras culturas requiere distinguir paralelos, contacto e influencia demostrable.",
     meta: "Grecia arcaica y clásica",
   },
@@ -110,6 +121,7 @@ const editorialTimeline: TimelineItem[] =[
     date: "586–332 a.C.",
     type: "Transformación religiosa",
     title: "Exilio, retorno y período persa",
+    category: "event",
     text: "La destrucción de Jerusalén y el exilio babilónico forman parte de una etapa decisiva de transformación. El período posterior muestra la reorganización de comunidades y tradiciones que desembocará en el diverso mundo del judaísmo del Segundo Templo.",
     meta: "Babilonia · Yehud · período persa",
   },
@@ -117,6 +129,7 @@ const editorialTimeline: TimelineItem[] =[
     date: "c. 516 a.C.–70 d.C.",
     type: "Corpus",
     title: "Judaísmo del Segundo Templo",
+    category: "corpus",
     text: "Biblia hebrea, literatura sapiencial, apocalíptica, Qumrán y otros textos muestran un panorama diverso en el que se desarrollan y reinterpretan tradiciones anteriores.",
     meta: "Judea · Qumrán · Mediterráneo oriental",
   },
@@ -124,6 +137,7 @@ const editorialTimeline: TimelineItem[] =[
     date: "siglo I d.C.",
     type: "Corpus",
     title: "Cristianismos antiguos",
+    category: "corpus",
     text: "Los textos cristianos surgen dentro de un mundo judío y grecorromano. Los manuscritos, traducciones y comunidades posteriores permiten seguir cómo se transmitieron y reinterpretaron.",
     meta: "Mediterráneo oriental · griego, arameo, copto y latín",
   },
@@ -157,7 +171,7 @@ export default async function HomePage() {
             <div className="timeline-node" aria-hidden="true" />
             <div className="timeline-date">{item.date}</div>
             <div className="timeline-card">
-              <p className="timeline-type">{item.type}</p>
+              <div className={`timeline-marker timeline-marker-${item.category}`}><span className="timeline-marker-dot" aria-hidden="true" />{item.type}</div>
               <h2>{item.title}</h2>
               <p>{item.text}</p>
               <small>{item.meta}</small>
