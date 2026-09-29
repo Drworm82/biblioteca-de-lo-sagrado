@@ -40,6 +40,53 @@ export async function listWorks():Promise<WorkListItem[]>{
   return works.map(w=>({stableKey:entityById.get(w.id)||w.id,title:w.title,description:w.description,status:w.status,tradition:linksByWork.get(w.id)?.[0]||null,witnessCount:counts.get(w.id)||0}));
 }
 
+export type TimelineWork = {
+  stableKey:string;
+  title:string;
+  tradition:string|null;
+  earliest:number|null;
+  latest:number|null;
+  precision:string|null;
+};
+
+export async function listTimelineWorks():Promise<TimelineWork[]>{
+  const [works,entities,links,traditions,dates]=await Promise.all([
+    query<any>("works",{select:"id,title",order:"title.asc"}),
+    query<any>("entities",{select:"id,stable_key",entity_type:"eq.work"}),
+    query<any>("work_traditions",{select:"work_id,tradition_id"}),
+    query<any>("traditions",{select:"id,name"}),
+    query<any>("dating_assertions",{select:"entity_id,earliest,latest,precision",order:"earliest.asc.nullslast"})
+  ]);
+  const entityById=new Map(entities.map(e=>[e.id,e.stable_key]));
+  const traditionById=new Map(traditions.map(t=>[t.id,t.name]));
+  const traditionsByWork=new Map<string,string[]>();
+  for(const link of links){
+    const name=traditionById.get(link.tradition_id);
+    if(!name)continue;
+    const values=traditionsByWork.get(link.work_id)||[];
+    values.push(name);
+    traditionsByWork.set(link.work_id,values);
+  }
+  const firstDate=new Map<string,any>();
+  for(const date of dates){
+    if(!firstDate.has(date.entity_id))firstDate.set(date.entity_id,date);
+  }
+  return works
+    .map(work=>{
+      const date=firstDate.get(work.id);
+      return {
+        stableKey:entityById.get(work.id)||work.id,
+        title:work.title,
+        tradition:traditionsByWork.get(work.id)?.[0]||null,
+        earliest:date?.earliest??null,
+        latest:date?.latest??null,
+        precision:date?.precision??null,
+      };
+    })
+    .filter(work=>work.earliest!==null||work.latest!==null)
+    .sort((a,b)=>(a.earliest??a.latest??Infinity)-(b.earliest??b.latest??Infinity));
+}
+
 export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
   const found=await query<any>("entities",{select:"id,stable_key",entity_type:"eq.work",stable_key:"eq."+stableKey,limit:"1"});
   if(!found[0])return null;
