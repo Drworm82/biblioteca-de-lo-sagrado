@@ -165,6 +165,11 @@ export default async function HomePage() {
               <h2>{item.title}</h2>
               <p>{item.text}</p>
               <small>{item.meta}</small>
+              {item.href && (
+                <Link className="timeline-entry" href={item.href}>
+                  Abrir en la biblioteca <span aria-hidden="true">→</span>
+                </Link>
+              )}
             </div>
           </article>
         ))}
