@@ -21,7 +21,7 @@ export type WorkListItem={stableKey:string;title:string;description:string|null;
 export type ReaderContent={representationType:string;textContent:string;normalizedText:string|null;sourceTitle:string|null;sourceUrl:string|null;notes:string|null};
 export type ReaderVariant={unitKey:string;variantType:string;description:string|null;status:string;witnessLabel:string|null;readingText:string;normalizedText:string|null;notes:string|null;sourceTitle:string|null};
 export type ReaderUnit={stableKey:string;label:string|null;unitType:string;pathKey:string|null;witnessLabel:string|null;translationTitle:string|null;contents:ReaderContent[];variants:ReaderVariant[]};
-export type WorkDetail=WorkListItem&{workId:string;traditions:string[];dates:Array<{earliest:number|null;latest:number|null;precision:string|null;method:string|null;confidence:string|null;notes:string|null}>;witnesses:Array<{stableKey:string;label:string|null;type:string;language:string|null;script:string|null;dateNote:string|null}>;units:ReaderUnit[];sources:Array<{title:string;sourceType:string;author:string|null;url:string|null;notes:string|null}>;relations:AtlasRelation[]};
+export type WorkDetail=WorkListItem&{workId:string;traditions:string[];dates:Array<{earliest:number|null;latest:number|null;precision:string|null;method:string|null;confidence:string|null;notes:string|null}>;witnesses:Array<{stableKey:string;label:string|null;type:string;language:string|null;script:string|null;dateNote:string|null}>;units:ReaderUnit[];sources:Array<{title:string;sourceType:string;author:string|null;url:string|null;notes:string|null}>;relations:AtlasRelation[];claims:EvidenceChainItem[];interpretations:EvidenceChainItem[];hypotheses:EvidenceChainItem[]};
 
 export async function listWorks():Promise<WorkListItem[]>{
   const [works,entities,links,traditions,witnesses]=await Promise.all([
@@ -161,6 +161,15 @@ export type AtlasRelation = {
   href:string|null;
 };
 
+export type EvidenceChainItem = {
+  stableKey:string;
+  title:string;
+  statement:string;
+  status:string;
+  confidence:string|null;
+  notes:string|null;
+};
+
 export type AtlasDetail = {
   kind:"evidence"|"event";
   stableKey:string;
@@ -215,6 +224,7 @@ export async function getAtlasDetail(kind:"evidence"|"event",stableKey:string):P
   }
   const sourceIds=[...new Set(sourceLinks.map(x=>x.source_id).filter(Boolean))];
   const sources=sourceIds.length?await query<any>("sources",{select:"id,title,author_text,source_type,url,notes",id:"in."+list(sourceIds)}):[];
+  const chain = kind==="evidence" ? await loadEvidenceChain(id) : {claims:[],interpretations:[],hypotheses:[]};
   const relations=await query<any>("relations",{select:"id,subject_entity_id,predicate,object_entity_id,confidence_id,status,notes",or:"(subject_entity_id.eq."+id+",object_entity_id.eq."+id+")"});
   const relatedIds=[...new Set(relations.flatMap(x=>[x.subject_entity_id,x.object_entity_id]).filter((x:string)=>x!==id))];
   const relatedEntities=relatedIds.length?await query<any>("entities",{select:"id,stable_key,entity_type",id:"in."+list(relatedIds)}):[];
@@ -223,6 +233,7 @@ export async function getAtlasDetail(kind:"evidence"|"event",stableKey:string):P
     kind,stableKey:entities[0].stable_key,title,type,description,observation,notes,confidence:entityConfidence,
     dates:dates.map(d=>({earliest:d.earliest??null,latest:d.latest??null,precision:d.precision??null,method:d.dating_method??null,confidence:confidenceById.get(d.confidence_id)||null,notes:d.notes??null})),
     sources:sources.map(s=>({title:s.title,author:s.author_text??null,sourceType:s.source_type,url:s.url??null,notes:s.notes??null})),
+    claims:chain.claims,interpretations:chain.interpretations,hypotheses:chain.hypotheses,
     relations:relations.map(r=>{
       const outgoing=r.subject_entity_id===id;
       const other=outgoing?r.object_entity_id:r.subject_entity_id;
@@ -233,6 +244,31 @@ export async function getAtlasDetail(kind:"evidence"|"event",stableKey:string):P
   };
 }
 
+
+
+async function loadEvidenceChain(evidenceId:string):Promise<{claims:EvidenceChainItem[];interpretations:EvidenceChainItem[];hypotheses:EvidenceChainItem[]}> {
+  const [claimLinks,interpretationLinks,hypothesisLinks,entities,claims,interpretations,hypotheses,confidence]=await Promise.all([
+    query<any>("claim_evidence",{select:"claim_id",evidence_id:"eq."+evidenceId}),
+    query<any>("interpretation_evidence",{select:"interpretation_id",evidence_id:"eq."+evidenceId}),
+    query<any>("hypothesis_evidence",{select:"hypothesis_id",evidence_id:"eq."+evidenceId}),
+    query<any>("entities",{select:"id,stable_key"}),
+    query<any>("claims",{select:"id,predicate,value_text,value_number,value_date,value_json,confidence_id,status,notes"}),
+    query<any>("interpretations",{select:"id,title,statement,confidence_id,status,notes"}),
+    query<any>("hypotheses",{select:"id,statement,confidence_id,status,notes"}),
+    query<any>("confidence_levels",{select:"id,label"})
+  ]);
+  const entityById=new Map(entities.map(x=>[x.id,x.stable_key]));
+  const confidenceById=new Map(confidence.map(x=>[x.id,x.label]));
+  const claimIds=new Set(claimLinks.map(x=>x.claim_id));
+  const interpretationIds=new Set(interpretationLinks.map(x=>x.interpretation_id));
+  const hypothesisIds=new Set(hypothesisLinks.map(x=>x.hypothesis_id));
+  const claimValue=(x:any)=>x.value_text??x.value_number??x.value_date??(x.value_json?JSON.stringify(x.value_json):"");
+  return {
+    claims:claims.filter(x=>claimIds.has(x.id)).map(x=>({stableKey:entityById.get(x.id)||x.id,title:x.predicate,statement:claimValue(x),status:x.status,confidence:confidenceById.get(x.confidence_id)||null,notes:x.notes??null})),
+    interpretations:interpretations.filter(x=>interpretationIds.has(x.id)).map(x=>({stableKey:entityById.get(x.id)||x.id,title:x.title,statement:x.statement,status:x.status,confidence:confidenceById.get(x.confidence_id)||null,notes:x.notes??null})),
+    hypotheses:hypotheses.filter(x=>hypothesisIds.has(x.id)).map(x=>({stableKey:entityById.get(x.id)||x.id,title:"Hipótesis",statement:x.statement,status:x.status,confidence:confidenceById.get(x.confidence_id)||null,notes:x.notes??null}))
+  };
+}
 export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
   const found=await query<any>("entities",{select:"id,stable_key",entity_type:"eq.work",stable_key:"eq."+stableKey,limit:"1"});
   if(!found[0])return null;
