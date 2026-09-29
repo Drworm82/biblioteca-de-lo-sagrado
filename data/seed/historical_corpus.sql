@@ -7,7 +7,7 @@
 
 BEGIN;
 
-CREATE TEMP FUNCTION entity_id(p_type text, p_key text)
+CREATE FUNCTION pg_temp.entity_id(p_type text, p_key text)
 RETURNS uuid
 LANGUAGE plpgsql
 AS $$
@@ -225,7 +225,7 @@ INSERT INTO textual_variant_readings(id,variant_id,witness_id,textual_unit_id,re
 (entity_id('reading','matthew-24-3-sinaiticus-eipe'),entity_id('variant','matthew-24-3-imperative'),entity_id('witness','matthew-sinaiticus-24-3'),entity_id('unit','matthew-24-3-sinaiticus'),'ειπε ημιν','ειπε ημιν',(SELECT id FROM languages WHERE iso_639_3='grc'),'Reading reported for Sinaiticus.'),
 (entity_id('reading','matthew-24-3-vaticanus-eipe'),entity_id('variant','matthew-24-3-imperative'),entity_id('witness','matthew-vaticanus-24-3'),entity_id('unit','matthew-24-3-vaticanus'),'ειπε ημιν','ειπε ημιν',(SELECT id FROM languages WHERE iso_639_3='grc'),'Reading reported for Vaticanus.'),
 (entity_id('reading','matthew-24-3-ephraemi-eipe'),entity_id('variant','matthew-24-3-imperative'),entity_id('witness','matthew-ephraemi-24-3'),entity_id('unit','matthew-24-3-ephraemi'),'ειπε ημιν','ειπε ημιν',(SELECT id FROM languages WHERE iso_639_3='grc'),'Reading reported for Ephraemi.'),
-(entity_id('reading','matthew-24-3-byzantine-eipe'),entity_id('variant','matthew-24-3-imperative'),entity_id('witness','matthew-sinaiticus-24-3'),NULL,'ειπε ημιν','ειπε ημιν',(SELECT id FROM languages WHERE iso_639_3='grc'),'Representative Byzantine reading; witness assignment is intentionally not used to imply Sinaiticus contains this form.')
+(entity_id('reading','matthew-24-3-byzantine-eipe'),entity_id('variant','matthew-24-3-imperative'),NULL,NULL,'ειπε ημιν','ειπε ημιν',(SELECT id FROM languages WHERE iso_639_3='grc'),'Representative Byzantine reading; no specific witness is assigned here.')
 ;
 
 INSERT INTO textual_variant_sources(variant_id,source_id,source_location_id) VALUES
