@@ -1,0 +1,4 @@
+import Link from "next/link";
+import {listWorks} from "@/lib/library";
+export const dynamic="force-dynamic";
+export default async function BibliotecaPage(){const works=await listWorks();return <main className="page"><p className="eyebrow">Biblioteca</p><h1>Obras</h1><p className="lead">El catálogo muestra obras separadas de sus testimonios, manuscritos, ediciones y traducciones.</p>{works.length===0?<div className="empty">No hay obras disponibles. Verifica la migración y el corpus.</div>:<div className="library-grid">{works.map(w=><Link className="card" href={"/biblioteca/"+w.stableKey} key={w.stableKey}><span className="tag">{w.status}</span><h2>{w.title}</h2><p className="lead">{w.description}</p><div className="card-meta">{w.tradition??"Sin tradición registrada"} · {w.witnessCount} testimonio{w.witnessCount===1?"":"s"}</div></Link>)}</div>}</main>}
