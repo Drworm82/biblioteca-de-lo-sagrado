@@ -1,6 +1,46 @@
 import Link from "next/link";
+import { listTimelineWorks, type TimelineWork } from "@/lib/library";
 
-const timeline = [
+type TimelineItem = {
+  date: string;
+  type: string;
+  title: string;
+  text: string;
+  meta: string;
+  href?: string;
+  source: "editorial" | "library";
+};
+
+function formatYear(year: number|null): string {
+  if(year === null)return "";
+  if(year === 0)return "1 a.C.";
+  if(year < 0)return Math.abs(year + 1) + " a.C.";
+  return year + " d.C.";
+}
+
+function formatRange(earliest: number|null, latest: number|null): string {
+  if(earliest === null && latest === null)return "Fecha no determinada";
+  if(earliest === latest || latest === null)return "c. " + formatYear(earliest);
+  if(earliest === null)return "hasta " + formatYear(latest);
+  return "c. " + formatYear(earliest) + "–" + formatYear(latest);
+}
+
+function workToTimelineItem(work: TimelineWork): TimelineItem {
+  const evidence = work.stableKey === "homo-naledi-mortuary-context";
+  return {
+    date: formatRange(work.earliest, work.latest),
+    type: evidence ? "Evidencia" : "Obra fechada",
+    title: work.title,
+    text: evidence
+      ? "Registro de evidencia arqueológica dentro de la biblioteca. La fecha corresponde al contexto deposicional documentado y no convierte por sí sola la interpretación en un hecho."
+      : "Obra incorporada al corpus con una datación explícita. La fecha representa el rango registrado en la base de datos y puede coexistir con otras propuestas.",
+    meta: [work.tradition, work.precision].filter(Boolean).join(" · ") || "Biblioteca de lo Sagrado",
+    href: "/biblioteca/" + work.stableKey,
+    source: "library",
+  };
+}
+
+const editorialTimeline: TimelineItem[] =[
   {
     date: "c. 100.000 a.C.",
     type: "Evidencia",
@@ -87,7 +127,18 @@ const timeline = [
   },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const datedWorks = await listTimelineWorks();
+  const libraryItems = datedWorks.map(workToTimelineItem);
+  const timeline = [...editorialTimeline, ...libraryItems].sort((a,b) => {
+    const parse = (date:string) => {
+      const match = date.match(/-?\\d[\\d.]*/);
+      if(!match)return Number.POSITIVE_INFINITY;
+      const n=Number(match[0].replace(/\\./g,""));
+      return date.includes("a.C.") ? -(n-1) : n;
+    };
+    return parse(a.date)-parse(b.date);
+  });
   return (
     <main className="timeline-page">
       <header className="timeline-hero">
