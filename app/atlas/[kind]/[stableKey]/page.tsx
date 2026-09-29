@@ -46,7 +46,7 @@ export default async function AtlasDetailPage({params}:{params:Promise<{kind:str
         </div>
         <div className="panel">
           <h2>Relaciones registradas</h2>
-          {detail.related.length===0?<div className="empty">No hay relaciones registradas todavía.</div>:<div className="unit-list">{detail.related.map((r,i)=><div className="unit" key={r.stableKey+"|"+r.relation+"|"+i}><h3>{r.label}</h3><small>{r.relation}</small></div>)}</div>}
+          {detail.relations.length===0?<div className="empty">No hay relaciones registradas todavía.</div>:<div className="unit-list">{detail.relations.map((r,i)=><div className="unit" key={r.stableKey+"|"+r.relation+"|"+i}><small>{r.direction==="hacia"?"Relación hacia":"Relación desde"} · {r.relation}</small>{r.href?<Link href={r.href}><h3>{r.label} →</h3></Link>:<h3>{r.label}</h3>}<small>{[r.entityType,r.confidence,r.status].filter(Boolean).join(" · ")}</small>{r.notes?<p>{r.notes}</p>:null}</div>)}</div>}
         </div>
       </section>
       <aside>
