@@ -28,7 +28,7 @@ INSERT INTO textual_unit_contents(
     id,textual_unit_id,representation_type,text_content,normalized_text,source_id,notes
 ) VALUES
 (
-    gen_random_uuid(),
+    pg_temp.entity_id('unit_content','matthew-24-3-regius-original'),
     pg_temp.entity_id('unit','matthew-24-3-regius'),
     'original',
     'Εἰπον ἡμῖν',
@@ -37,7 +37,7 @@ INSERT INTO textual_unit_contents(
     'Short witness-level sample used by the textual-variant reader; it is not presented as the complete verse.'
 ),
 (
-    gen_random_uuid(),
+    pg_temp.entity_id('unit_content','matthew-24-3-regius-transliteration'),
     pg_temp.entity_id('unit','matthew-24-3-regius'),
     'transliteration',
     'Eipon hēmin',
