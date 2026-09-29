@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { listTimelineWorks, type TimelineDating } from "@/lib/library";
+import { listTimelineItems, type TimelineDating } from "@/lib/library";
 
 type TimelineItem = {
   date: string;
@@ -28,19 +28,24 @@ function formatRange(earliest: number|null, latest: number|null): string {
 }
 
 function workToTimelineItem(work: TimelineDating): TimelineItem {
-  const evidence = work.stableKey === "homo-naledi-mortuary-context";
   return {
     date: formatRange(work.earliest, work.latest),
-    type: evidence ? "Evidencia" : "Datación registrada",
+    type:
+      work.category === "evidence" ? "Evidencia" :
+      work.category === "event" ? "Acontecimiento" :
+      "Datación registrada",
     title: work.title,
-    text: evidence
-      ? "Registro de evidencia arqueológica dentro de la biblioteca. La fecha corresponde al contexto deposicional documentado y no convierte por sí sola la interpretación en un hecho."
-      : "Esta es una afirmación de datación registrada para la obra. Otras propuestas pueden coexistir y no se descartan al mostrar esta.",
+    text:
+      work.category === "evidence"
+        ? "Registro de evidencia dentro de la biblioteca. La datación corresponde al contexto registrado y no convierte por sí sola una interpretación en un hecho."
+        : work.category === "event"
+          ? "Acontecimiento histórico incorporado a la cronología. La fecha representa la afirmación registrada y puede coexistir con otras propuestas."
+          : "Esta es una afirmación de datación registrada para la obra. Otras propuestas pueden coexistir y no se descartan al mostrar esta.",
     meta: [work.tradition, work.precision, work.method, work.confidence].filter(Boolean).join(" · ") || "Biblioteca de lo Sagrado",
-    href: "/biblioteca/" + work.stableKey,
+    href: work.category === "corpus" ? "/biblioteca/" + work.stableKey : undefined,
     source: "library",
     sortYear: work.earliest ?? work.latest ?? Number.POSITIVE_INFINITY,
-    category: evidence ? "evidence" : "corpus",
+    category: work.category,
   };
 }
 
@@ -144,7 +149,7 @@ const editorialTimeline: TimelineItem[] =[
 ];
 
 export default async function HomePage() {
-  const datedWorks = await listTimelineWorks();
+  const datedWorks = await listTimelineItems();
   const libraryItems = datedWorks.map(workToTimelineItem);
   const timeline = [...editorialTimeline, ...libraryItems].sort(
     (a,b) => a.sortYear - b.sortYear
