@@ -1,4 +1,4 @@
-# Esquema relacional PostgreSQL — diseño v1
+# Esquema relacional PostgreSQL — diseño v1.1
 
 Este documento convierte el modelo conceptual v2 en tablas, cardinalidades, claves e índices. No constituye todavía una migración ejecutable.
 
@@ -7,7 +7,7 @@ Este documento convierte el modelo conceptual v2 en tablas, cardinalidades, clav
 - PostgreSQL.
 - UUID como identificador técnico de entidades y registros.
 - `created_at` y `updated_at` en entidades mutables.
-- `stable_key` único para identidad editorial estable cuando corresponda.
+- `stable_key` es único dentro de cada `entity_type`.
 - Las fechas históricas no se almacenan como un único campo `date` cuando existe incertidumbre.
 - Las relaciones editoriales importantes conservan provenance.
 - Los nombres visibles no son claves primarias.
@@ -20,7 +20,7 @@ Este documento convierte el modelo conceptual v2 en tablas, cardinalidades, clav
 |---|---|---|
 | id | uuid | PK |
 | entity_type | text | NOT NULL |
-| stable_key | text | UNIQUE |
+| stable_key | text | NOT NULL |
 | created_at | timestamptz | NOT NULL |
 | updated_at | timestamptz | NOT NULL |
 
@@ -44,7 +44,17 @@ El registro permite que Claims y Relations apunten a cualquier entidad de domini
 | description | text | NULL |
 | tradition_type | text | NULL |
 
-Una tradición puede tener múltiples obras.
+### work_traditions
+
+- work_id FK works.id
+- tradition_id FK traditions.id
+- relationship_type NULL
+- confidence_id NULL
+- source_id NULL
+- notes NULL
+- UNIQUE(work_id, tradition_id)
+
+Se utiliza N:M desde el inicio. Una obra puede estar vinculada a varias tradiciones y una tradición puede contener múltiples obras.
 
 ---
 
@@ -57,16 +67,13 @@ Una tradición puede tener múltiples obras.
 | id | uuid | PK/FK entities.id |
 | title | text | NOT NULL |
 | description | text | NULL |
-| tradition_id | uuid | FK traditions.id, NULL |
 | status | text | NOT NULL |
 | created_at | timestamptz | NOT NULL |
 | updated_at | timestamptz | NOT NULL |
 
-No existe `author_id`.
+No existe `author_id` ni `tradition_id`.
 
-Una obra puede tener múltiples autores atribuidos mediante `person_work_roles`.
-
-Una obra puede pertenecer a una o varias tradiciones si posteriormente se modela la relación many-to-many. La FK directa debe considerarse un atajo opcional, no una limitación permanente.
+Una obra puede tener múltiples autores/atribuciones mediante `person_work_roles`.
 
 ---
 
@@ -117,8 +124,6 @@ Un TextualWitness puede estar asociado a un Manuscript, pero no necesariamente.
 
 ### manuscript_witnesses
 
-Tabla puente:
-
 - manuscript_id FK manuscripts.id
 - witness_id FK textual_witnesses.id
 - position_note
@@ -149,6 +154,7 @@ Esto permite que un manuscrito conserve varios testimonios.
 - witness_id
 - role
 - notes
+- UNIQUE(edition_id, witness_id)
 
 Una edición puede utilizar múltiples testimonios.
 
@@ -162,7 +168,7 @@ Una edición puede utilizar múltiples testimonios.
 |---|---|
 | id | uuid PK/FK entities.id |
 | title | text NOT NULL |
-| target_language_id | uuid FK languages.id |
+| target_language_id | uuid FK languages.id NOT NULL |
 | translator_notes | text NULL |
 | publication_year | integer NULL |
 | description | text NULL |
@@ -175,9 +181,10 @@ Una edición puede utilizar múltiples testimonios.
 - source_type NOT NULL
 - notes
 
-Restricción conceptual:
+Restricción:
 
-Al menos uno de `edition_id` o `witness_id` debe estar presente.
+- Al menos uno de `edition_id` o `witness_id` debe estar presente.
+- Ambos pueden estar presentes cuando se documenta una traducción que declara utilizar una edición basada en determinados testimonios.
 
 Una traducción puede basarse en múltiples fuentes.
 
@@ -198,9 +205,12 @@ Una traducción puede basarse en múltiples fuentes.
 | ordinal | integer NULL |
 | path_key | text NULL |
 
-La jerarquía se obtiene mediante `parent_id`.
+Restricción:
 
-No se debe asumir que todas las unidades pertenecen directamente a un Work.
+- `witness_id` o `translation_id` debe estar presente.
+- Ambos pueden estar presentes cuando la unidad representa una alineación explícita entre testimonio y traducción.
+
+La jerarquía se obtiene mediante `parent_id`.
 
 Ejemplos:
 
@@ -208,8 +218,6 @@ Ejemplos:
 - canto → línea
 - logion
 - inscripción → línea
-
-La combinación de `witness_id` y `translation_id` permite distinguir unidades de testimonios originales de unidades de traducciones.
 
 ---
 
@@ -238,6 +246,7 @@ La combinación de `witness_id` y `translation_id` permite distinguir unidades d
 - valid_from NULL
 - valid_to NULL
 - notes
+- UNIQUE(language_id, script_id)
 
 ---
 
@@ -260,20 +269,9 @@ La combinación de `witness_id` y `translation_id` permite distinguir unidades d
 - confidence_id NULL
 - source_id NULL
 - notes
+- UNIQUE(person_id, work_id, role)
 
-UNIQUE(person_id, work_id, role)
-
-Esto permite distinguir:
-
-- autor
-- atribución tradicional
-- compilador
-- traductor
-- escriba
-- redactor
-- editor
-- investigador
-- descubridor
+Esto permite distinguir autor, atribución tradicional, compilador, traductor, escriba, redactor, editor, investigador y descubridor.
 
 ---
 
@@ -286,7 +284,6 @@ Esto permite distinguir:
 - description
 - latitude NULL
 - longitude NULL
-- geometry futura
 - valid_from NULL
 - valid_to NULL
 
@@ -335,6 +332,7 @@ PostGIS queda reservado para una migración posterior.
 - dating_assertion_id
 - source_id
 - source_location_id NULL
+- UNIQUE(dating_assertion_id, source_id, source_location_id)
 
 Una entidad puede tener múltiples DatingAssertions.
 
@@ -395,12 +393,14 @@ Una Source puede tener múltiples localizadores.
 - evidence_id
 - source_id
 - source_location_id NULL
+- UNIQUE(evidence_id, source_id, source_location_id)
 
 ### evidence_entities
 
 - evidence_id
 - entity_id
 - role
+- UNIQUE(evidence_id, entity_id, role)
 
 Esto permite asociar una evidencia con varias entidades sin imponer una dirección artificial.
 
@@ -425,30 +425,40 @@ Esto permite asociar una evidencia con varias entidades sin imponer una direcci�
 - created_at
 - updated_at
 
-Regla:
+Modelo:
 
-Un Claim debe tener un objeto entidad o un valor, pero no necesariamente ambos.
+`subject --predicate--> object`
+
+o
+
+`subject --predicate--> literal`
+
+Restricciones:
+
+1. Debe existir `object_entity_id` o exactamente uno de los campos `value_*`.
+2. No se permite simultáneamente un objeto entidad y un literal.
+3. Entre `value_text`, `value_number`, `value_date` y `value_json` solamente uno puede estar presente.
 
 Ejemplos:
-
-`Genesis --composed_in--> Ancient Israel`
 
 `Work --dated_to--> Period`
 
 `Person --attributed_as_author_of--> Work`
 
-`Claim --has_value--> "..." `
+`Work --has_title_variant--> "..." `
 
 ### claim_sources
 
 - claim_id
 - source_id
 - source_location_id NULL
+- UNIQUE(claim_id, source_id, source_location_id)
 
 ### claim_evidence
 
 - claim_id
 - evidence_id
+- UNIQUE(claim_id, evidence_id)
 
 ---
 
@@ -470,24 +480,29 @@ Ejemplos:
 
 - interpretation_id
 - evidence_id
+- UNIQUE(interpretation_id, evidence_id)
 
 ### interpretation_claims
 
 - interpretation_id
 - claim_id
+- UNIQUE(interpretation_id, claim_id)
 
 ### interpretation_sources
 
 - interpretation_id
 - source_id
 - source_location_id NULL
+- UNIQUE(interpretation_id, source_id, source_location_id)
 
 ### interpretation_alternatives
 
 - interpretation_id
 - alternative_interpretation_id
+- CHECK(interpretation_id <> alternative_interpretation_id)
+- UNIQUE(interpretation_id, alternative_interpretation_id)
 
-La relación alternativa es autorreferencial y debe impedir `id = alternative_interpretation_id`.
+La relación alternativa es autorreferencial.
 
 ---
 
@@ -508,24 +523,28 @@ La relación alternativa es autorreferencial y debe impedir `id = alternative_in
 
 - hypothesis_id
 - evidence_id
+- UNIQUE(hypothesis_id, evidence_id)
 
 ### hypothesis_claims
 
 - hypothesis_id
 - claim_id
+- UNIQUE(hypothesis_id, claim_id)
 
 ### hypothesis_interpretations
 
 - hypothesis_id
 - interpretation_id
+- UNIQUE(hypothesis_id, interpretation_id)
 
 ### hypothesis_sources
 
 - hypothesis_id
 - source_id
 - source_location_id NULL
+- UNIQUE(hypothesis_id, source_id, source_location_id)
 
-Una hipótesis puede depender de varias interpretaciones.
+Una hipótesis puede depender de varias interpretaciones, claims y evidencias.
 
 ---
 
@@ -549,11 +568,13 @@ Una hipótesis puede depender de varias interpretaciones.
 - relation_id
 - source_id
 - source_location_id NULL
+- UNIQUE(relation_id, source_id, source_location_id)
 
 ### relation_evidence
 
 - relation_id
 - evidence_id
+- UNIQUE(relation_id, evidence_id)
 
 Las relaciones son claims binarios especializados.
 
@@ -591,6 +612,7 @@ Una relación `influence` con confidence `plausible` no equivale a dependencia d
 - relation_type
 - confidence_id
 - source_id NULL
+- UNIQUE(concept_id, related_concept_id, relation_type)
 
 ---
 
@@ -627,16 +649,20 @@ El ordinal es solamente para ordenamiento interno y no debe mostrarse como una p
 - created_at
 - updated_at
 
+`email` debe ser UNIQUE.
+
 ### roles
 
 - id
 - key
 - name
+- UNIQUE(key)
 
 ### user_roles
 
 - user_id
 - role_id
+- UNIQUE(user_id, role_id)
 
 Roles iniciales:
 
@@ -662,6 +688,7 @@ Roles iniciales:
 - contribution_id
 - source_id
 - source_location_id NULL
+- UNIQUE(contribution_id, source_id, source_location_id)
 
 ### reviews
 
@@ -687,8 +714,12 @@ Decisiones:
 - created_by_user_id
 - previous_revision_id NULL
 - revision_number
-- content
+- content_jsonb
 - created_at
+
+UNIQUE(entity_id, revision_number)
+
+El contenido se conserva como snapshot estructurado para permitir que diferentes tipos de entidad tengan esquemas de contenido distintos.
 
 ### publications
 
@@ -698,6 +729,10 @@ Decisiones:
 - published_by_user_id
 - published_at
 
+Una entidad puede tener múltiples publicaciones históricas y una revisión puede estar publicada más de una vez si el flujo editorial lo requiere.
+
+La publicación es un evento, no el estado actual.
+
 Regla crítica:
 
 Una Contribution nunca altera directamente una entidad publicada.
@@ -706,13 +741,13 @@ Una Contribution nunca altera directamente una entidad publicada.
 
 ## 22. Versionado de contenido textual/editorial
 
-Las entidades cuyo contenido sea editorialmente mutable deben utilizar revisiones.
-
 El patrón general es:
 
 `current published state ← Publication ← Revision ← Contribution`
 
 El historial nunca se elimina físicamente.
+
+Una entidad puede tener múltiples revisiones y múltiples publicaciones.
 
 ---
 
@@ -720,7 +755,7 @@ El historial nunca se elimina físicamente.
 
 ### Biblioteca
 
-- Tradition 1:N Work
+- Tradition N:M Work mediante WorkTradition
 - Work 1:N TextualWitness
 - Manuscript N:M TextualWitness
 - Edition N:M TextualWitness
@@ -753,7 +788,8 @@ El historial nunca se elimina físicamente.
 - Contribution 1:N Review
 - Contribution 1:N Revision
 - Entity 1:N Revision
-- Revision 1:0..1 Publication
+- Revision 1:N Publication
+- Entity 1:N Publication
 
 ---
 
@@ -763,7 +799,9 @@ Crear índices para:
 
 - entities(entity_type)
 - entities(entity_type, stable_key)
-- works(tradition_id)
+- works(status)
+- work_traditions(tradition_id)
+- work_traditions(work_id)
 - textual_witnesses(work_id)
 - textual_witnesses(language_id)
 - manuscripts(findspot_id)
@@ -786,10 +824,11 @@ Crear índices para:
 - relations(object_entity_id)
 - relations(predicate)
 - relation_sources(source_id)
-- contribution(status)
-- review(contribution_id, created_at)
-- revision(entity_id, revision_number)
-- publication(entity_id)
+- contributions(status)
+- reviews(contribution_id, created_at)
+- revisions(entity_id, revision_number)
+- publications(entity_id, published_at)
+- publications(revision_id)
 
 Las búsquedas de texto completo se diseñarán después de conocer el corpus real.
 
@@ -802,13 +841,17 @@ Las búsquedas de texto completo se diseñarán después de conocer el corpus re
 3. CHECK para estados y tipos controlados cuando no necesitemos tablas de referencia.
 4. CHECK para impedir valores históricos imposibles cuando el modelo lo permita.
 5. CHECK para translation_sources: al menos edition_id o witness_id.
-6. CHECK para claims: object_entity_id o al menos un value_*.
-7. CHECK para relations: subject_entity_id <> object_entity_id cuando el predicado no admita reflexividad.
-8. CHECK para interpretation_alternatives: interpretation_id <> alternative_interpretation_id.
-9. UNIQUE en tablas puente cuando la relación no pueda repetirse.
-10. No usar CASCADE destructivo sobre historial editorial.
-11. Preferir RESTRICT para registros históricos.
-12. Las eliminaciones físicas deben ser excepcionales; el contenido publicado debe poder conservar su historial.
+6. CHECK para textual_units: witness_id o translation_id.
+7. CHECK para claims: exactamente un object_entity_id o un value_*.
+8. CHECK para claims: como máximo un value_*.
+9. CHECK para interpretation_alternatives: interpretation_id <> alternative_interpretation_id.
+10. UNIQUE en tablas puente cuando la relación no pueda repetirse.
+11. No usar CASCADE destructivo sobre historial editorial.
+12. Preferir RESTRICT para registros históricos.
+13. Las eliminaciones físicas deben ser excepcionales.
+14. Una publicación debe apuntar siempre a una revisión existente.
+15. Una revisión debe apuntar a la entidad que versiona.
+16. Una entidad no puede tener dos revisiones con el mismo revision_number.
 
 ---
 
@@ -821,13 +864,102 @@ No incluir todavía:
 - variantes textuales completas;
 - almacenamiento de facsímiles;
 - rutas geográficas avanzadas;
-- arqueological_site como entidad separada;
+- archaeological_site como entidad separada;
 - microservicios;
 - sistema de puntuación de evidencia.
 
 Estas capacidades no deben bloquear el esquema inicial.
 
-## 27. Regla de oro del esquema
+## 27. Resultado de las pruebas de estrés
+
+### Génesis
+
+Modelo soporta:
+
+- una obra;
+- múltiples testimonios;
+- múltiples manuscritos;
+- múltiples ediciones;
+- múltiples traducciones;
+- relaciones entre edición y testimonios;
+- traducciones basadas en una edición y/o testimonios concretos.
+
+Resultado: PASS.
+
+### Evangelio de Tomás
+
+Modelo soporta:
+
+- un Work;
+- testimonio copto;
+- fragmentos griegos independientes;
+- manuscritos distintos;
+- traducción española basada en el testimonio copto;
+- futura relación entre testimonios sin confundir Work con Manuscript.
+
+Resultado: PASS.
+
+### Homo naledi
+
+Modelo soporta:
+
+- evidencia material;
+- claims descriptivos;
+- interpretaciones;
+- hipótesis;
+- fuentes;
+- niveles de confianza;
+- separación explícita entre observación e interpretación.
+
+Resultado: PASS.
+
+### Relación de influencia
+
+Modelo soporta:
+
+- sujeto;
+- objeto;
+- predicado influence;
+- evidencia;
+- fuentes;
+- confidence plausible;
+- distinción entre influence y dependence.
+
+Resultado: PASS.
+
+### Prueba negativa: Claim inválido
+
+Debe rechazarse:
+
+`Work --dated_to--> Period + value_text="9600 BCE"`
+
+porque mezcla objeto entidad y literal.
+
+Resultado esperado: REJECT.
+
+### Prueba negativa: unidad textual huérfana
+
+Debe rechazarse:
+
+`TextualUnit(witness_id=NULL, translation_id=NULL)`
+
+porque no identifica qué testimonio/traducción representa.
+
+Resultado esperado: REJECT.
+
+### Prueba negativa: publicación sin revisión
+
+Debe rechazarse:
+
+`Publication(revision_id=NULL)`
+
+porque una publicación debe poder reconstruirse a partir de una revisión concreta.
+
+Resultado esperado: REJECT.
+
+---
+
+## 28. Regla de oro del esquema
 
 La base de datos debe poder responder por separado:
 
