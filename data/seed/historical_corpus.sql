@@ -224,7 +224,7 @@ INSERT INTO textual_variants(id,textual_unit_id,variant_type,description,status)
 INSERT INTO textual_variant_readings(id,variant_id,witness_id,textual_unit_id,reading_text,normalized_text,language_id,notes) VALUES
 (pg_temp.entity_id('reading','matthew-24-3-sinaiticus-eipe'),pg_temp.entity_id('variant','matthew-24-3-imperative'),pg_temp.entity_id('witness','matthew-sinaiticus-24-3'),pg_temp.entity_id('unit','matthew-24-3-sinaiticus'),'ειπε ημιν','ειπε ημιν',(SELECT id FROM languages WHERE iso_639_3='grc'),'Reading reported for Sinaiticus.'),
 (pg_temp.entity_id('reading','matthew-24-3-vaticanus-eipe'),pg_temp.entity_id('variant','matthew-24-3-imperative'),pg_temp.entity_id('witness','matthew-vaticanus-24-3'),pg_temp.entity_id('unit','matthew-24-3-vaticanus'),'ειπε ημιν','ειπε ημιν',(SELECT id FROM languages WHERE iso_639_3='grc'),'Reading reported for Vaticanus.'),
-(pg_temp.entity_id('reading','matthew-24-3-ephraemi-eipe'),pg_temp.entity_id('variant','matthew-24-3-imperative'),pg_temp.entity_id('witness','matthew-ephraemi-24-3'),pg_temp.entity_id('unit','matthew-24-3-ephraemi'),'ειπε ημιν','ειπε ημιν',(SELECT id FROM languages WHERE iso_639_3='grc'),'Reading reported for Ephraemi.'),
+(pg_temp.entity_id('reading','matthew-24-3-ephraemi-eipe'),pg_temp.entity_id('variant','matthew-24-3-imperative'),pg_temp.entity_id('witness','matthew-ephraemi-24-3'),pg_temp.entity_id('unit','matthew-24-3-ephraemi'),'ειπε ημιν','ειπε ημιν',(SELECT id FROM languages WHERE iso_639_3='grc'),'Reading reported for Ephraemi.')
 ;
 
 INSERT INTO textual_variant_sources(variant_id,source_id,source_location_id) VALUES
