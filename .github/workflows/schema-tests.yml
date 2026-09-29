@@ -5,11 +5,13 @@ on:
     paths:
       - "db/migrations/**"
       - "tests/database-schema.sql"
+      - "tests/adversarial-schema.sql"
       - ".github/workflows/schema-tests.yml"
   pull_request:
     paths:
       - "db/migrations/**"
       - "tests/database-schema.sql"
+      - "tests/adversarial-schema.sql"
       - ".github/workflows/schema-tests.yml"
 
 jobs:
@@ -44,3 +46,8 @@ jobs:
           PGPASSWORD: postgres
         run: |
           psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f tests/database-schema.sql
+      - name: Run adversarial schema tests
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f tests/adversarial-schema.sql
