@@ -9,6 +9,7 @@ type TimelineItem = {
   meta: string;
   href?: string;
   source: "editorial" | "library";
+  sortYear: number;
 };
 
 function formatYear(year: number|null): string {
@@ -37,6 +38,7 @@ function workToTimelineItem(work: TimelineDating): TimelineItem {
     meta: [work.tradition, work.precision, work.method, work.confidence].filter(Boolean).join(" · ") || "Biblioteca de lo Sagrado",
     href: "/biblioteca/" + work.stableKey,
     source: "library",
+    sortYear: work.earliest ?? work.latest ?? Number.POSITIVE_INFINITY,
   };
 }
 
@@ -130,15 +132,9 @@ const editorialTimeline: TimelineItem[] =[
 export default async function HomePage() {
   const datedWorks = await listTimelineWorks();
   const libraryItems = datedWorks.map(workToTimelineItem);
-  const timeline = [...editorialTimeline, ...libraryItems].sort((a,b) => {
-    const parse = (date:string) => {
-      const match = date.match(/-?\d[\d.]*/);
-      if(!match)return Number.POSITIVE_INFINITY;
-      const n=Number(match[0].replace(/\./g,""));
-      return date.includes("a.C.") ? -(n-1) : n;
-    };
-    return parse(a.date)-parse(b.date);
-  });
+  const timeline = [...editorialTimeline, ...libraryItems].sort(
+    (a,b) => a.sortYear - b.sortYear
+  );
   return (
     <main className="timeline-page">
       <header className="timeline-hero">
