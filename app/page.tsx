@@ -44,13 +44,6 @@ const timeline = [
     meta: "India · sánscrito védico y sánscrito",
   },
   {
-    date: "c. 800–300 a.C.",
-    type: "Tradiciones y textos",
-    title: "Grecia",
-    text: "Homero, Hesíodo y los himnos transmiten distintas formas de pensamiento religioso griego. La comparación con otras culturas requiere distinguir paralelos, contacto e influencia demostrable.",
-    meta: "Grecia arcaica y clásica",
-  },
-  {
     date: "c. 1200–900 a.C.",
     type: "Religión israelita antigua",
     title: "Los primeros israelitas",
@@ -65,6 +58,13 @@ const timeline = [
     meta: "Reinos de Israel y Judá · Jerusalén · santuarios locales",
   },
   {
+    date: "c. 800–300 a.C.",
+    type: "Tradiciones y textos",
+    title: "Grecia",
+    text: "Homero, Hesíodo y los himnos transmiten distintas formas de pensamiento religioso griego. La comparación con otras culturas requiere distinguir paralelos, contacto e influencia demostrable.",
+    meta: "Grecia arcaica y clásica",
+  },
+  {
     date: "586–332 a.C.",
     type: "Transformación religiosa",
     title: "Exilio, retorno y período persa",
@@ -72,7 +72,7 @@ const timeline = [
     meta: "Babilonia · Yehud · período persa",
   },
   {
-    date: "siglos II a.C.–I d.C.",
+    date: "c. 516 a.C.–70 d.C.",
     type: "Corpus",
     title: "Judaísmo del Segundo Templo",
     text: "Biblia hebrea, literatura sapiencial, apocalíptica, Qumrán y otros textos muestran un panorama diverso en el que se desarrollan y reinterpretan tradiciones anteriores.",
