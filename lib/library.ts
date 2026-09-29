@@ -215,7 +215,7 @@ export async function getAtlasDetail(kind:"evidence"|"event",stableKey:string):P
   }
   const sourceIds=[...new Set(sourceLinks.map(x=>x.source_id).filter(Boolean))];
   const sources=sourceIds.length?await query<any>("sources",{select:"id,title,author_text,source_type,url,notes",id:"in."+list(sourceIds)}):[];
-  const relations=await query<any>("relations",{select:"id,subject_entity_id,predicate,object_entity_id,confidence_id,status,notes",or:"subject_entity_id.eq."+id+",object_entity_id.eq."+id});
+  const relations=await query<any>("relations",{select:"id,subject_entity_id,predicate,object_entity_id,confidence_id,status,notes",or:"(subject_entity_id.eq."+id+",object_entity_id.eq."+id+")"});
   const relatedIds=[...new Set(relations.flatMap(x=>[x.subject_entity_id,x.object_entity_id]).filter((x:string)=>x!==id))];
   const relatedEntities=relatedIds.length?await query<any>("entities",{select:"id,stable_key,entity_type",id:"in."+list(relatedIds)}):[];
   const relatedById=new Map(relatedEntities.map(x=>[x.id,x]));
@@ -250,7 +250,7 @@ export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
     query<any>("translation_sources",{select:"translation_id,edition_id,witness_id,source_type,notes"}),
     query<any>("edition_witnesses",{select:"edition_id,witness_id"}),
     query<any>("entities",{select:"id,stable_key,entity_type"}),
-    query<any>("relations",{select:"subject_entity_id,predicate,object_entity_id,confidence_id,status,notes",or:"subject_entity_id.eq."+workId+",object_entity_id.eq."+workId})
+    query<any>("relations",{select:"subject_entity_id,predicate,object_entity_id,confidence_id,status,notes",or:"(subject_entity_id.eq."+workId+",object_entity_id.eq."+workId+")"})
   ]);
   const work=works[0];if(!work)return null;
   const witnessIds=witnesses.map(w=>w.id);
