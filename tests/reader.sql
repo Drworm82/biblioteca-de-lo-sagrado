@@ -117,6 +117,53 @@ BEGIN
   ) THEN
     RAISE EXCEPTION 'Reader validation: GA 019 reading is not attached to the GA 019 unit/witness pair';
   END IF;
-END $$;
+
+  -- The contiguous Spanish pilot must contain exactly three verse units.
+  SELECT count(*)
+    INTO v_reader_row_count
+  FROM textual_units tu
+  JOIN entities e ON e.id = tu.id
+  JOIN translations tr ON tr.id = tu.translation_id
+  JOIN entities te ON te.id = tr.id
+  WHERE te.stable_key = 'matthew-working-spanish'
+    AND e.stable_key IN (
+      'matthew-24-3-working-spanish',
+      'matthew-24-4-working-spanish',
+      'matthew-24-5-working-spanish'
+    );
+
+  IF v_reader_row_count <> 3 THEN
+    RAISE EXCEPTION 'Reader validation: expected 3 contiguous Matthew translation units, got %', v_reader_row_count;
+  END IF;
+
+  SELECT count(*)
+    INTO v_reader_row_count
+  FROM textual_unit_contents tuc
+  JOIN textual_units tu ON tu.id = tuc.textual_unit_id
+  JOIN entities e ON e.id = tu.id
+  WHERE e.stable_key IN (
+      'matthew-24-3-working-spanish',
+      'matthew-24-4-working-spanish',
+      'matthew-24-5-working-spanish'
+    )
+    AND tuc.representation_type IN ('close_translation','readable_translation');
+
+  IF v_reader_row_count <> 6 THEN
+    RAISE EXCEPTION 'Reader validation: expected 6 Spanish pilot content layers, got %', v_reader_row_count;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM textual_unit_contents tuc
+    JOIN textual_units tu ON tu.id=tuc.textual_unit_id
+    JOIN entities e ON e.id=tu.id
+    WHERE e.stable_key='matthew-24-4-working-spanish'
+      AND tuc.representation_type='readable_translation'
+      AND tuc.text_content LIKE 'Jesús les respondió%'
+  ) THEN
+    RAISE EXCEPTION 'Reader validation: Matthew 24:4 readable translation missing';
+  END IF;
+
+END $;
 
 ROLLBACK;
