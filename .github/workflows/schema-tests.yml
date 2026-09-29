@@ -1,4 +1,5 @@
 name: Schema tests
+# Reader integration validation is part of the PostgreSQL test pipeline.
 
 on:
   push:
