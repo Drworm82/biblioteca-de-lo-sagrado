@@ -1,0 +1,2 @@
+import Link from "next/link";
+export default function HomePage(){return <main className="page"><p className="eyebrow">Biblioteca de lo Sagrado</p><h1>Primero el texto. Después su contexto.</h1><p className="lead">Biblioteca digital comparada de textos sagrados y religiosos. La biblioteca no establece un canon: reúne textos, testimonios, traducciones y fuentes.</p><p style={{marginTop:28}}><Link className="tag" href="/biblioteca">Entrar a la biblioteca</Link></p></main>}
