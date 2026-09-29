@@ -42,7 +42,7 @@ function workToTimelineItem(work: TimelineDating): TimelineItem {
           ? "Acontecimiento histórico incorporado a la cronología. La fecha representa la afirmación registrada y puede coexistir con otras propuestas."
           : "Esta es una afirmación de datación registrada para la obra. Otras propuestas pueden coexistir y no se descartan al mostrar esta.",
     meta: [work.tradition, work.precision, work.method, work.confidence].filter(Boolean).join(" · ") || "Biblioteca de lo Sagrado",
-    href: work.category === "corpus" ? "/biblioteca/" + work.stableKey : undefined,
+    href: work.category === "corpus" ? "/biblioteca/" + work.stableKey : work.category === "evidence" ? "/atlas/evidencia/" + work.stableKey : work.category === "event" ? "/atlas/acontecimiento/" + work.stableKey : undefined,
     source: "library",
     sortYear: work.earliest ?? work.latest ?? Number.POSITIVE_INFINITY,
     category: work.category,
