@@ -67,6 +67,12 @@ INSERT INTO sources(id,source_type,title,author_text,publisher,publication_year,
  'Witness-level reference',NULL,NULL,NULL,
  'https://biblehub.com/texts/matthew/24-3.htm',
  'Referencia de testigos que muestra, entre otros, Codex Sinaiticus, Codex Vaticanus y Codex Ephraemi Syri Rescriptus, además de la variación entre ειπον/ειπε y otros detalles.'),
+(pg_temp.entity_id('source','csntm-ga019'),
+ 'manuscript_catalog',
+ 'Manuscript GA 019 — Codex Regius',
+ 'Center for the Study of New Testament Manuscripts',NULL,NULL,NULL,
+ 'https://manuscripts.csntm.org/manuscript/Group/GA_019',
+ 'Catálogo del testimonio GA 019 (Codex Regius): códice griego de los Evangelios, fechado en el siglo VIII, Bibliothèque Nationale de France, Gr. 62.'),
 (pg_temp.entity_id('source','brill-coptic-gnostic-library'),
  'scholarly_edition',
  'Coptic Gnostic Library Online',
@@ -105,7 +111,8 @@ INSERT INTO source_locations(source_id,page,chapter,section,locator_text) VALUES
 (pg_temp.entity_id('source','genesis-dss-commentary'),NULL,NULL,NULL,'Discussion of fragmentary Genesis manuscripts from the Dead Sea Scrolls'),
 (pg_temp.entity_id('source','berger-et-al-2025-naledi'),NULL,NULL,'Abstract','Evidence from Dinaledi Chamber, Hill Antechamber and Puzzle Box'),
 (pg_temp.entity_id('source','dirks-et-al-2017-naledi-age'),NULL,NULL,'Abstract','Depositional age 236–335 ka'),
-(pg_temp.entity_id('source','nasscal-thomas'),NULL,NULL,'Manuscripts','Three Greek fragments and one complete Coptic witness')
+(pg_temp.entity_id('source','nasscal-thomas'),NULL,NULL,'Manuscripts','Three Greek fragments and one complete Coptic witness'),
+(pg_temp.entity_id('source','csntm-ga019'),NULL,NULL,'Manuscript record','GA 019 / Codex Regius; Gr. 62')
 ;
 
 INSERT INTO traditions(id,name,description,tradition_type) VALUES
@@ -206,13 +213,15 @@ WHERE da.entity_id=pg_temp.entity_id('manuscript','4q2-genesis');
 INSERT INTO textual_witnesses(id,work_id,witness_type,title_or_label,language_id,script_id,date_note,description) VALUES
 (pg_temp.entity_id('witness','matthew-sinaiticus-24-3'),pg_temp.entity_id('work','gospel-of-matthew'),'manuscript','Codex Sinaiticus, Matthew 24:3',(SELECT id FROM languages WHERE iso_639_3='grc'),(SELECT id FROM scripts WHERE iso_15924='Grek'),'4th century CE','Greek manuscript witness.'),
 (pg_temp.entity_id('witness','matthew-vaticanus-24-3'),pg_temp.entity_id('work','gospel-of-matthew'),'manuscript','Codex Vaticanus, Matthew 24:3',(SELECT id FROM languages WHERE iso_639_3='grc'),(SELECT id FROM scripts WHERE iso_15924='Grek'),'4th century CE','Greek manuscript witness.'),
-(pg_temp.entity_id('witness','matthew-ephraemi-24-3'),pg_temp.entity_id('work','gospel-of-matthew'),'manuscript','Codex Ephraemi Syri Rescriptus, Matthew 24:3',(SELECT id FROM languages WHERE iso_639_3='grc'),(SELECT id FROM scripts WHERE iso_15924='Grek'),'5th century CE','Greek manuscript witness.')
+(pg_temp.entity_id('witness','matthew-ephraemi-24-3'),pg_temp.entity_id('work','gospel-of-matthew'),'manuscript','Codex Ephraemi Syri Rescriptus, Matthew 24:3',(SELECT id FROM languages WHERE iso_639_3='grc'),(SELECT id FROM scripts WHERE iso_15924='Grek'),'5th century CE','Greek manuscript witness.'),
+(pg_temp.entity_id('witness','matthew-regius-24-3'),pg_temp.entity_id('work','gospel-of-matthew'),'manuscript','Codex Regius (GA 019), Matthew 24:3',(SELECT id FROM languages WHERE iso_639_3='grc'),(SELECT id FROM scripts WHERE iso_15924='Grek'),'8th century CE','Greek manuscript witness; GA 019, Bibliothèque Nationale de France, Gr. 62.')
 ;
 
 INSERT INTO textual_units(id,parent_id,witness_id,translation_id,unit_type,label,ordinal,path_key) VALUES
 (pg_temp.entity_id('unit','matthew-24-3-sinaiticus'),NULL,pg_temp.entity_id('witness','matthew-sinaiticus-24-3'),NULL,'verse','Matthew 24:3',3,'matthew.24.3'),
 (pg_temp.entity_id('unit','matthew-24-3-vaticanus'),NULL,pg_temp.entity_id('witness','matthew-vaticanus-24-3'),NULL,'verse','Matthew 24:3',3,'matthew.24.3'),
-(pg_temp.entity_id('unit','matthew-24-3-ephraemi'),NULL,pg_temp.entity_id('witness','matthew-ephraemi-24-3'),NULL,'verse','Matthew 24:3',3,'matthew.24.3')
+(pg_temp.entity_id('unit','matthew-24-3-ephraemi'),NULL,pg_temp.entity_id('witness','matthew-ephraemi-24-3'),NULL,'verse','Matthew 24:3',3,'matthew.24.3'),
+(pg_temp.entity_id('unit','matthew-24-3-regius'),NULL,pg_temp.entity_id('witness','matthew-regius-24-3'),NULL,'verse','Matthew 24:3',3,'matthew.24.3')
 ;
 
 INSERT INTO textual_variants(id,textual_unit_id,variant_type,description,status) VALUES
@@ -224,7 +233,8 @@ INSERT INTO textual_variants(id,textual_unit_id,variant_type,description,status)
 INSERT INTO textual_variant_readings(id,variant_id,witness_id,textual_unit_id,reading_text,normalized_text,language_id,notes) VALUES
 (pg_temp.entity_id('reading','matthew-24-3-sinaiticus-eipe'),pg_temp.entity_id('variant','matthew-24-3-imperative'),pg_temp.entity_id('witness','matthew-sinaiticus-24-3'),pg_temp.entity_id('unit','matthew-24-3-sinaiticus'),'ειπε ημιν','ειπε ημιν',(SELECT id FROM languages WHERE iso_639_3='grc'),'Reading reported for Sinaiticus.'),
 (pg_temp.entity_id('reading','matthew-24-3-vaticanus-eipe'),pg_temp.entity_id('variant','matthew-24-3-imperative'),pg_temp.entity_id('witness','matthew-vaticanus-24-3'),pg_temp.entity_id('unit','matthew-24-3-vaticanus'),'ειπε ημιν','ειπε ημιν',(SELECT id FROM languages WHERE iso_639_3='grc'),'Reading reported for Vaticanus.'),
-(pg_temp.entity_id('reading','matthew-24-3-ephraemi-eipe'),pg_temp.entity_id('variant','matthew-24-3-imperative'),pg_temp.entity_id('witness','matthew-ephraemi-24-3'),pg_temp.entity_id('unit','matthew-24-3-ephraemi'),'ειπε ημιν','ειπε ημιν',(SELECT id FROM languages WHERE iso_639_3='grc'),'Reading reported for Ephraemi.')
+(pg_temp.entity_id('reading','matthew-24-3-ephraemi-eipe'),pg_temp.entity_id('variant','matthew-24-3-imperative'),pg_temp.entity_id('witness','matthew-ephraemi-24-3'),pg_temp.entity_id('unit','matthew-24-3-ephraemi'),'ειπε ημιν','ειπε ημιν',(SELECT id FROM languages WHERE iso_639_3='grc'),'Reading reported for Ephraemi.'),
+(pg_temp.entity_id('reading','matthew-24-3-regius-eipon'),pg_temp.entity_id('variant','matthew-24-3-imperative'),pg_temp.entity_id('witness','matthew-regius-24-3'),pg_temp.entity_id('unit','matthew-24-3-regius'),'ειπον ημιν','ειπον ημιν',(SELECT id FROM languages WHERE iso_639_3='grc'),'Reading ειπον reported for GA 019 (Codex Regius); stored separately from the ειπε witnesses.')
 ;
 
 INSERT INTO textual_variant_sources(variant_id,source_id,source_location_id) VALUES
@@ -238,6 +248,10 @@ SELECT r.id,pg_temp.entity_id('source','matthew-24-3-witness-reference'),
        (SELECT id FROM source_locations WHERE source_id=pg_temp.entity_id('source','matthew-24-3-witness-reference') LIMIT 1)
 FROM textual_variant_readings r
 WHERE r.variant_id=pg_temp.entity_id('variant','matthew-24-3-imperative');
+
+INSERT INTO textual_variant_reading_sources(reading_id,source_id,source_location_id)
+VALUES(pg_temp.entity_id('reading','matthew-24-3-regius-eipon'),
+       pg_temp.entity_id('source','csntm-ga019'), NULL);
 
 INSERT INTO translations(id,title,target_language_id,translator_notes,description) VALUES
 (pg_temp.entity_id('translation','matthew-24-3-working-spanish'),
