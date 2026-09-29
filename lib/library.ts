@@ -149,6 +149,18 @@ export async function listTimelineItems():Promise<TimelineDating[]>{
   return result.sort((a,b)=>(a.earliest??a.latest??Infinity)-(b.earliest??b.latest??Infinity));
 }
 
+export type AtlasRelation = {
+  stableKey:string;
+  label:string;
+  entityType:string;
+  relation:string;
+  direction:"hacia"|"desde";
+  confidence:string|null;
+  status:string;
+  notes:string|null;
+  href:string|null;
+};
+
 export type AtlasDetail = {
   kind:"evidence"|"event";
   stableKey:string;
@@ -160,12 +172,19 @@ export type AtlasDetail = {
   confidence:string|null;
   dates:Array<{earliest:number|null;latest:number|null;precision:string|null;method:string|null;confidence:string|null;notes:string|null}>;
   sources:Array<{title:string;author:string|null;sourceType:string;url:string|null;notes:string|null}>;
-  related:Array<{stableKey:string;label:string;relation:string}>;
+  relations:AtlasRelation[];
 };
+
+function entityHref(entityType:string,stableKey:string){
+  if(entityType==="work")return "/biblioteca/"+stableKey;
+  if(entityType==="evidence")return "/atlas/evidencia/"+stableKey;
+  if(entityType==="historical_event")return "/atlas/acontecimiento/"+stableKey;
+  return null;
+}
 
 export async function getAtlasDetail(kind:"evidence"|"event",stableKey:string):Promise<AtlasDetail|null>{
   const entityType=kind==="evidence"?"evidence":"historical_event";
-  const entities=await query<any>("entities",{select:"id,stable_key",entity_type:"eq."+entityType,stable_key:"eq."+stableKey,limit:"1"});
+  const entities=await query<any>("entities",{select:"id,stable_key,entity_type",entity_type:"eq."+entityType,stable_key:"eq."+stableKey,limit:"1"});
   if(!entities[0])return null;
   const id=entities[0].id;
   const [dates,confidence]=await Promise.all([
@@ -174,6 +193,7 @@ export async function getAtlasDetail(kind:"evidence"|"event",stableKey:string):P
   ]);
   const confidenceById=new Map(confidence.map(x=>[x.id,x.label]));
   let title="",type="",description="",observation:string|null=null,notes:string|null=null,sourceLinks:any[]=[];
+  let entityConfidence:string|null=null;
   if(kind==="evidence"){
     const rows=await query<any>("evidence",{select:"evidence_type,description,observation,notes,confidence_id",id:"eq."+id,limit:"1"});
     if(!rows[0])return null;
@@ -182,6 +202,7 @@ export async function getAtlasDetail(kind:"evidence"|"event",stableKey:string):P
     description=rows[0].description;
     observation=rows[0].observation??null;
     notes=rows[0].notes??null;
+    entityConfidence=confidenceById.get(rows[0].confidence_id)||null;
     sourceLinks=await query<any>("evidence_sources",{select:"source_id",evidence_id:"eq."+id});
   }else{
     const rows=await query<any>("historical_events",{select:"title,event_type,description,notes",id:"eq."+id,limit:"1"});
@@ -194,19 +215,21 @@ export async function getAtlasDetail(kind:"evidence"|"event",stableKey:string):P
   }
   const sourceIds=[...new Set(sourceLinks.map(x=>x.source_id).filter(Boolean))];
   const sources=sourceIds.length?await query<any>("sources",{select:"id,title,author_text,source_type,url,notes",id:"in."+list(sourceIds)}):[];
-  const relatedLinks=await query<any>("relations",{select:"subject_entity_id,predicate,object_entity_id",or:"subject_entity_id.eq."+id+",object_entity_id.eq."+id});
-  const relatedIds=[...new Set(relatedLinks.flatMap(x=>[x.subject_entity_id,x.object_entity_id]).filter((x:string)=>x!==id))];
-  const relatedEntities=relatedIds.length?await query<any>("entities",{select:"id,stable_key",id:"in."+list(relatedIds)}):[];
-  const relatedById=new Map(relatedEntities.map(x=>[x.id,x.stable_key]));
+  const relations=await query<any>("relations",{select:"id,subject_entity_id,predicate,object_entity_id,confidence_id,status,notes",or:"subject_entity_id.eq."+id+",object_entity_id.eq."+id});
+  const relatedIds=[...new Set(relations.flatMap(x=>[x.subject_entity_id,x.object_entity_id]).filter((x:string)=>x!==id))];
+  const relatedEntities=relatedIds.length?await query<any>("entities",{select:"id,stable_key,entity_type",id:"in."+list(relatedIds)}):[];
+  const relatedById=new Map(relatedEntities.map(x=>[x.id,x]));
   return {
-    kind,stableKey:entities[0].stable_key,title,type,description,observation,notes,
-    confidence:confidenceById.get((kind==="evidence"?(await query<any>("evidence",{select:"confidence_id",id:"eq."+id,limit:"1"}))[0]?.confidence_id:null))||null,
+    kind,stableKey:entities[0].stable_key,title,type,description,observation,notes,confidence:entityConfidence,
     dates:dates.map(d=>({earliest:d.earliest??null,latest:d.latest??null,precision:d.precision??null,method:d.dating_method??null,confidence:confidenceById.get(d.confidence_id)||null,notes:d.notes??null})),
     sources:sources.map(s=>({title:s.title,author:s.author_text??null,sourceType:s.source_type,url:s.url??null,notes:s.notes??null})),
-    related:relatedLinks.map(x=>{
-      const other=x.subject_entity_id===id?x.object_entity_id:x.subject_entity_id;
-      return {stableKey:relatedById.get(other)||other,label:relatedById.get(other)||other,relation:x.predicate};
-    }).filter(x=>x.stableKey)
+    relations:relations.map(r=>{
+      const outgoing=r.subject_entity_id===id;
+      const other=outgoing?r.object_entity_id:r.subject_entity_id;
+      const entity=relatedById.get(other);
+      if(!entity)return null;
+      return {stableKey:entity.stable_key,label:entity.stable_key,entityType:entity.entity_type,relation:r.predicate,direction:outgoing?"hacia":"desde",confidence:confidenceById.get(r.confidence_id)||null,status:r.status,notes:r.notes??null,href:entityHref(entity.entity_type,entity.stable_key)};
+    }).filter(Boolean) as AtlasRelation[]
   };
 }
 
