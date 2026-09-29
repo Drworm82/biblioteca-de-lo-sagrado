@@ -1,0 +1,46 @@
+name: Schema tests
+
+on:
+  push:
+    paths:
+      - "db/migrations/**"
+      - "tests/database-schema.sql"
+      - ".github/workflows/schema-tests.yml"
+  pull_request:
+    paths:
+      - "db/migrations/**"
+      - "tests/database-schema.sql"
+      - ".github/workflows/schema-tests.yml"
+
+jobs:
+  postgres-schema:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: biblioteca_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d biblioteca_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Apply migrations
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0001_initial_schema.sql
+          psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0002_schema_integrity_patch.sql
+          psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0003_textual_variants_and_versioning.sql
+      - name: Run schema smoke tests
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f tests/database-schema.sql
