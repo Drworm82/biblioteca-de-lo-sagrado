@@ -17,7 +17,12 @@ BEGIN
   END IF;
 
   RETURN v_id;
-END $$;
+END $;
+
+INSERT INTO entities(entity_type, stable_key) VALUES
+    ('unit_content','matthew-24-3-regius-original'),
+    ('unit_content','matthew-24-3-regius-transliteration')
+ON CONFLICT (entity_type, stable_key) DO NOTHING;
 
 INSERT INTO textual_unit_contents(
     id,textual_unit_id,representation_type,text_content,normalized_text,source_id,notes
