@@ -10,9 +10,37 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+
       - run: npm install
       - run: npm run typecheck
       - run: npm run build
+
+      - name: Start Next.js
+        run: |
+          npm run start > /tmp/biblioteca-next.log 2>&1 &
+          echo $! > /tmp/biblioteca-next.pid
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/biblioteca-next.log
+          exit 1
+
+      - name: Exercise Supabase-backed reader
+        run: |
+          curl -fsS http://127.0.0.1:3000/biblioteca/gospel-of-matthew > /tmp/reader.html
+          grep -F "Gospel of Matthew" /tmp/reader.html
+          grep -F "Εἰπον ἡμῖν" /tmp/reader.html
+          grep -F "Eipon hēmin" /tmp/reader.html
+          grep -F "Mateo 24:3" /tmp/reader.html
+          grep -F "Mateo 24:4" /tmp/reader.html
+          grep -F "Mateo 24:5" /tmp/reader.html
+          grep -F "Tengan cuidado de que nadie los engañe" /tmp/reader.html
+          grep -F "engañarán a muchos" /tmp/reader.html
+          grep -F "Codex Regius (GA 019), Matthew 24:3" /tmp/reader.html
