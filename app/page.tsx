@@ -8,8 +8,8 @@ type TimelineItem = {
   text: string;
   meta: string;
   href?: string;
-  source: "editorial" | "library";
-  sortYear: number;
+  source?: "editorial" | "library";
+  sortYear?: number;
   category: "evidence" | "archaeology" | "tradition" | "corpus" | "event";
 };
 
@@ -152,7 +152,7 @@ export default async function HomePage() {
   const datedWorks = await listTimelineItems();
   const libraryItems = datedWorks.map(workToTimelineItem);
   const timeline = [...editorialTimeline, ...libraryItems].sort(
-    (a,b) => a.sortYear - b.sortYear
+    (a,b) => (a.sortYear ?? Number.POSITIVE_INFINITY) - (b.sortYear ?? Number.POSITIVE_INFINITY)
   );
   return (
     <main className="timeline-page">
