@@ -35,8 +35,8 @@ INSERT INTO translations(id,title,target_language_id,translator_notes,descriptio
 (pg_temp.entity_id('translation','matthew-working-spanish'),'Mateo 24:3–5 — traducción de trabajo del corpus',(SELECT id FROM languages WHERE iso_639_3='spa'),'Traducción propia, orientada a fidelidad semántica y transparencia léxica; no pretende reproducir una traducción comercial.','Primera unidad continua del corpus de lectura. Se conserva separada de los testigos griegos.')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO translation_sources(translation_id,edition_id,witness_id,source_type,provenance_role,scope_type,scope_path_key,scope_label,notes) VALUES
-(pg_temp.entity_id('translation','matthew-working-spanish'),NULL,pg_temp.entity_id('witness','matthew-regius-24-3'),'witness','reference_only','passage','matthew.24.3','Mateo 24:3','GA 019 se conserva como referencia manuscrita para Mateo 24:3; 24:4–5 no se presentan como lecturas específicas de GA 019.')
+INSERT INTO translation_sources(translation_id,edition_id,witness_id,source_type,notes) VALUES
+(pg_temp.entity_id('translation','matthew-working-spanish'),NULL,pg_temp.entity_id('witness','matthew-regius-24-3'),'witness','GA 019 se conserva como referencia manuscrita para Mateo 24:3; 24:4–5 no se presentan como lecturas específicas de GA 019.')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO entities(entity_type,stable_key) VALUES
