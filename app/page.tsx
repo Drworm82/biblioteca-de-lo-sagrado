@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { listTimelineWorks, type TimelineWork } from "@/lib/library";
+import { listTimelineWorks, type TimelineDating } from "@/lib/library";
 
 type TimelineItem = {
   date: string;
@@ -25,16 +25,16 @@ function formatRange(earliest: number|null, latest: number|null): string {
   return "c. " + formatYear(earliest) + "–" + formatYear(latest);
 }
 
-function workToTimelineItem(work: TimelineWork): TimelineItem {
+function workToTimelineItem(work: TimelineDating): TimelineItem {
   const evidence = work.stableKey === "homo-naledi-mortuary-context";
   return {
     date: formatRange(work.earliest, work.latest),
-    type: evidence ? "Evidencia" : "Obra fechada",
+    type: evidence ? "Evidencia" : "Datación registrada",
     title: work.title,
     text: evidence
       ? "Registro de evidencia arqueológica dentro de la biblioteca. La fecha corresponde al contexto deposicional documentado y no convierte por sí sola la interpretación en un hecho."
-      : "Obra incorporada al corpus con una datación explícita. La fecha representa el rango registrado en la base de datos y puede coexistir con otras propuestas.",
-    meta: [work.tradition, work.precision].filter(Boolean).join(" · ") || "Biblioteca de lo Sagrado",
+      : "Esta es una afirmación de datación registrada para la obra. Otras propuestas pueden coexistir y no se descartan al mostrar esta.",
+    meta: [work.tradition, work.precision, work.method, work.confidence].filter(Boolean).join(" · ") || "Biblioteca de lo Sagrado",
     href: "/biblioteca/" + work.stableKey,
     source: "library",
   };
@@ -157,7 +157,7 @@ export default async function HomePage() {
       <section className="timeline" aria-label="Recorrido cronológico">
         <div className="timeline-axis" aria-hidden="true" />
         {timeline.map((item, index) => (
-          <article className={`timeline-item ${index % 2 === 0 ? "timeline-left" : "timeline-right"}`} key={item.title}>
+          <article className={`timeline-item ${index % 2 === 0 ? "timeline-left" : "timeline-right"}`} key={`${item.title}-${item.date}-${index}`}>
             <div className="timeline-node" aria-hidden="true" />
             <div className="timeline-date">{item.date}</div>
             <div className="timeline-card">
