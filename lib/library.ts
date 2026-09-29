@@ -1,9 +1,8 @@
 import "server-only";
 
 function config(){
-  const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  if(!url||!key)throw new Error("Supabase is not configured.");
+  const url=process.env.NEXT_PUBLIC_SUPABASE_URL||"https://ykvtnpjxgpebjiuwbmsw.supabase.co";
+  const key=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY||"sb_publishable_2aZltTkDF1I91aK-Ly2usA_3VWP_WC9";
   return {url,key};
 }
 
