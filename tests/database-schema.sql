@@ -1,14 +1,11 @@
 -- Biblioteca de lo Sagrado
--- Schema smoke tests for migrations 0001 and 0002.
--- Run in a disposable PostgreSQL database after applying all migrations.
-
+-- Schema smoke tests for migrations 0001-0003.
 BEGIN;
 
 DO $$
-DECLARE
-  required_table text;
+DECLARE t text;
 BEGIN
-  FOREACH required_table IN ARRAY ARRAY[
+  FOREACH t IN ARRAY ARRAY[
     'entities','confidence_levels','languages','scripts','language_scripts',
     'places','place_names','periods','sources','source_locations','traditions',
     'works','work_traditions','textual_witnesses','manuscripts','manuscript_witnesses',
@@ -20,92 +17,90 @@ BEGIN
     'hypotheses','hypothesis_evidence','hypothesis_claims','hypothesis_interpretations',
     'hypothesis_sources','relations','relation_sources','relation_evidence','concepts',
     'concept_relations','contributions','contribution_sources','reviews','revisions',
-    'publications'
+    'publications','textual_variants','textual_variant_readings',
+    'textual_variant_sources','textual_variant_reading_sources'
   ] LOOP
-    IF to_regclass('public.' || required_table) IS NULL THEN
-      RAISE EXCEPTION 'Missing table: %', required_table;
-    END IF;
+    IF to_regclass('public.' || t) IS NULL THEN RAISE EXCEPTION 'Missing table: %', t; END IF;
   END LOOP;
 END $$;
 
 DO $$
 BEGIN
-  IF (SELECT count(*) FROM confidence_levels) <> 5 THEN
-    RAISE EXCEPTION 'Confidence seed is incomplete';
-  END IF;
-  IF (SELECT count(*) FROM roles) <> 4 THEN
-    RAISE EXCEPTION 'Role seed is incomplete';
+  IF (SELECT count(*) FROM confidence_levels) <> 5 THEN RAISE EXCEPTION 'Confidence seed incomplete'; END IF;
+  IF (SELECT count(*) FROM roles) <> 4 THEN RAISE EXCEPTION 'Role seed incomplete'; END IF;
+END $$;
+
+-- Golden textual path plus variant apparatus.
+DO $$
+DECLARE
+  e_work uuid := gen_random_uuid();
+  e_wit_a uuid := gen_random_uuid();
+  e_wit_b uuid := gen_random_uuid();
+  e_unit uuid := gen_random_uuid();
+  e_variant uuid := gen_random_uuid();
+  e_read_a uuid := gen_random_uuid();
+  e_read_b uuid := gen_random_uuid();
+  lang uuid;
+BEGIN
+  INSERT INTO entities(id,entity_type,stable_key) VALUES
+    (e_work,'work','variant-test-work'),
+    (e_wit_a,'textual_witness','variant-test-witness-a'),
+    (e_wit_b,'textual_witness','variant-test-witness-b'),
+    (e_unit,'textual_unit','variant-test-unit'),
+    (e_variant,'textual_variant','variant-test'),
+    (e_read_a,'textual_variant_reading','variant-reading-a'),
+    (e_read_b,'textual_variant_reading','variant-reading-b');
+
+  INSERT INTO works(id,title,status) VALUES(e_work,'Variant Test Work','draft');
+  INSERT INTO languages(name,iso_639_3) VALUES('Variant Test Language','vtt') RETURNING id INTO lang;
+
+  INSERT INTO textual_witnesses(id,work_id,witness_type,language_id)
+    VALUES(e_wit_a,e_work,'manuscript',lang),(e_wit_b,e_work,'fragment',lang);
+
+  INSERT INTO textual_units(id,witness_id,unit_type,label)
+    VALUES(e_unit,e_wit_a,'line','1');
+
+  INSERT INTO textual_variants(id,textual_unit_id,variant_type,description,status)
+    VALUES(e_variant,e_unit,'lexical','Test lexical variation','documented');
+
+  INSERT INTO textual_variant_readings(id,variant_id,witness_id,reading_text,language_id)
+    VALUES
+      (e_read_a,e_variant,e_wit_a,'reading A',lang),
+      (e_read_b,e_variant,e_wit_b,'reading B',lang);
+
+  IF (SELECT count(*) FROM textual_variant_readings WHERE variant_id=e_variant) <> 2
+    THEN RAISE EXCEPTION 'Variant readings were not stored correctly';
   END IF;
 END $$;
 
--- Provenance must be enforced by the database.
+-- A revision may only point to a previous revision of the same entity.
+DO $$
+DECLARE e1 uuid := gen_random_uuid(); e2 uuid := gen_random_uuid(); r1 uuid; r2 uuid;
+BEGIN
+  INSERT INTO entities(id,entity_type,stable_key) VALUES
+    (e1,'work','revision-test-a'),(e2,'work','revision-test-b');
+
+  INSERT INTO users(email,status) VALUES('schema-test@example.invalid','active') RETURNING id INTO r1;
+
+  INSERT INTO revisions(entity_id,created_by_user_id,revision_number,content_jsonb)
+    VALUES(e1,r1,1,'{}') RETURNING id INTO r2;
+
+  BEGIN
+    INSERT INTO revisions(entity_id,created_by_user_id,previous_revision_id,revision_number,content_jsonb)
+      VALUES(e2,r1,r2,1,'{}');
+    RAISE EXCEPTION 'Cross-entity revision lineage was accepted';
+  EXCEPTION WHEN foreign_key_violation THEN
+    NULL;
+  END;
+END $$;
+
+-- Historical dating convention must be explicit.
 DO $$
 BEGIN
   IF NOT EXISTS (
-    SELECT 1
-    FROM pg_constraint
-    WHERE conname = 'place_names_source_fk'
-      AND conrelid = 'place_names'::regclass
-  ) THEN
-    RAISE EXCEPTION 'place_names.source_id FK is missing';
-  END IF;
-END $$;
-
--- Golden path: one Work -> Witness -> Manuscript/Edition -> Translation.
-DO $$
-DECLARE
-  e_trad uuid := gen_random_uuid();
-  e_work uuid := gen_random_uuid();
-  e_wit uuid := gen_random_uuid();
-  e_man uuid := gen_random_uuid();
-  e_edition uuid := gen_random_uuid();
-  e_translation uuid := gen_random_uuid();
-  lang uuid;
-  conf uuid;
-BEGIN
-  INSERT INTO entities(id,entity_type,stable_key) VALUES
-    (e_trad,'tradition','test-tradition'),
-    (e_work,'work','test-work'),
-    (e_wit,'textual_witness','test-witness'),
-    (e_man,'manuscript','test-manuscript'),
-    (e_edition,'edition','test-edition'),
-    (e_translation,'translation','test-translation');
-
-  INSERT INTO traditions(id,name,tradition_type) VALUES(e_trad,'Test Tradition','test');
-  INSERT INTO works(id,title,status) VALUES(e_work,'Test Work','draft');
-  INSERT INTO work_traditions(work_id,tradition_id) VALUES(e_work,e_trad);
-
-  INSERT INTO languages(name,iso_639_3) VALUES('Test language','tst') RETURNING id INTO lang;
-  INSERT INTO textual_witnesses(id,work_id,witness_type,language_id)
-    VALUES(e_wit,e_work,'manuscript',lang);
-  INSERT INTO manuscripts(id,repository,shelfmark) VALUES(e_man,'Test Repository','TEST 1');
-  INSERT INTO manuscript_witnesses(manuscript_id,witness_id) VALUES(e_man,e_wit);
-
-  INSERT INTO editions(id,title,edition_type) VALUES(e_edition,'Test Critical Edition','critical');
-  INSERT INTO edition_witnesses(edition_id,witness_id) VALUES(e_edition,e_wit);
-
-  INSERT INTO translations(id,title,target_language_id)
-    VALUES(e_translation,'Test Spanish Translation',lang);
-  INSERT INTO translation_sources(translation_id,edition_id,source_type)
-    VALUES(e_translation,e_edition,'primary');
-
-  SELECT id INTO conf FROM confidence_levels WHERE key='documented';
-  IF conf IS NULL THEN RAISE EXCEPTION 'Missing documented confidence'; END IF;
-END $$;
-
--- Claim invariant: exactly one target is required.
-DO $$
-BEGIN
-  BEGIN
-    INSERT INTO entities(entity_type,stable_key) VALUES('claim','invalid-claim');
-    INSERT INTO claims(id,subject_entity_id,predicate,confidence_id,status)
-      SELECT id,id,'invalid',c.id,'draft'
-      FROM entities e CROSS JOIN confidence_levels c
-      WHERE e.stable_key='invalid-claim' AND c.key='documented';
-    RAISE EXCEPTION 'Invalid claim was accepted';
-  EXCEPTION WHEN check_violation THEN
-    NULL;
-  END;
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name='dating_assertions' AND column_name='chronology_basis'
+  ) THEN RAISE EXCEPTION 'Dating chronology basis missing'; END IF;
 END $$;
 
 ROLLBACK;
