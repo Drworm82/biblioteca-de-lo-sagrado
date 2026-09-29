@@ -66,6 +66,10 @@ jobs:
           grep -F "Eipon hēmin" /tmp/reader.html
           grep -F "Manuscript GA 019 — Codex Regius" /tmp/reader.html
           grep -F "Variantes registradas" /tmp/reader.html
+          grep -F "Mateo 24:4" /tmp/reader.html
+          grep -F "Tengan cuidado de que nadie los engañe" /tmp/reader.html
+          grep -F "Mateo 24:5" /tmp/reader.html
+          grep -F "engañarán a muchos" /tmp/reader.html
       - name: Dump Next.js logs on failure
         if: failure()
         run: cat /tmp/biblioteca-next.log
