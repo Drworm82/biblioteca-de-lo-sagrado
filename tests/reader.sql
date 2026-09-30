@@ -93,6 +93,11 @@ BEGIN
     AND tuc.representation_type IN ('critical_text','transliteration');
   IF v_reader_row_count <> 6 THEN RAISE EXCEPTION 'Reader validation: expected 6 Greek pilot text layers, got %', v_reader_row_count; END IF;
 
+  SELECT count(*) INTO v_reader_row_count
+  FROM information_schema.columns
+  WHERE table_schema='public' AND table_name='translation_revisions' AND column_name='translation_id';
+  IF v_reader_row_count <> 1 THEN RAISE EXCEPTION 'Reader validation: translation_revisions model is missing'; END IF;
+
   IF NOT EXISTS (
     SELECT 1
     FROM textual_unit_contents tuc
