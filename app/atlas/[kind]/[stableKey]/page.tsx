@@ -14,6 +14,9 @@ function label(v:string,kind:string){
     evidenceType:{material:"Material",archaeological:"Arqueológica",textual:"Textual",linguistic:"Lingüística",geological:"Geológica",bioarchaeological:"Bioarqueológica",archaeological_observation:"Observación arqueológica",textual_comparison:"Comparación textual"},
     eventType:{historical:"Histórico",political:"Político",religious:"Religioso",cultural:"Cultural",military:"Militar"},
     relation:{context:"Contexto",influence:"Influencia",dependence:"Dependencia",parallel:"Paralelo",reinterpretation:"Reinterpretación",syncretism:"Sincretismo"},
+    entityType:{work:"Obra",evidence:"Evidencia",historical_event:"Acontecimiento histórico"},
+    precision:{broad_range:"Intervalo amplio",century:"Siglo",period:"Período",range:"Intervalo"},
+    method:{"codicology and paleography":"Codicología y paleografía","historical chronology":"Cronología histórica","historical-literary chronology":"Cronología histórico-literaria","literary chronology":"Cronología literaria","paleography":"Paleografía","paleography and manuscript context":"Paleografía y contexto manuscrito","U-Th, US-ESR, OSL and paleomagnetic constraints":"Restricciones U-Th, US-ESR, OSL y paleomagnéticas"},
     sourceType:{critical_edition:"Edición crítica",textual_reference:"Referencia textual",editorial_translation:"Traducción editorial",academic_chapter:"Capítulo académico",academic_monograph:"Monografía académica",academic_reference:"Referencia académica",manuscript_catalog:"Catálogo de manuscritos",peer_reviewed_article:"Artículo académico revisado por pares",scholarly_edition:"Edición académica",scholarly_reference:"Referencia académica"}
   };
   return maps[kind]?.[v]??v
@@ -66,7 +69,7 @@ export default async function AtlasDetailPage({params}:{params:Promise<{kind:str
         </div>:null}
         <div className="panel">
           <h2>Relaciones registradas</h2>
-          {detail.relations.length===0?<div className="empty">No hay relaciones registradas todavía.</div>:<div className="unit-list">{detail.relations.map((r,i)=><div className="unit" key={r.stableKey+"|"+r.relation+"|"+i}><small>{r.direction==="hacia"?"Relación hacia":"Relación desde"} · {label(r.relation,"relation")}</small>{r.href?<Link href={r.href}><h3>{r.label} →</h3></Link>:<h3>{r.label}</h3>}<small>{[r.entityType,r.confidence,label(r.status,"status")].filter(Boolean).join(" · ")}</small>{r.notes?<p>{r.notes}</p>:null}</div>)}</div>}
+          {detail.relations.length===0?<div className="empty">No hay relaciones registradas todavía.</div>:<div className="unit-list">{detail.relations.map((r,i)=><div className="unit" key={r.stableKey+"|"+r.relation+"|"+i}><small>{r.direction==="hacia"?"Relación hacia":"Relación desde"} · {label(r.relation,"relation")}</small>{r.href?<Link href={r.href}><h3>{r.label} →</h3></Link>:<h3>{r.label}</h3>}<small>{[label(r.entityType,"entityType"),r.confidence,label(r.status,"status")].filter(Boolean).join(" · ")}</small>{r.notes?<p>{r.notes}</p>:null}</div>)}</div>}
         </div>
       </section>
       <aside>
