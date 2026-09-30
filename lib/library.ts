@@ -20,7 +20,7 @@ function list(ids:string[]){return ids.length?"("+ids.join(",")+")":"";}
 export type WorkListItem={stableKey:string;title:string;description:string|null;status:string;tradition:string|null;witnessCount:number};
 export type ReaderContent={representationType:string;textContent:string;normalizedText:string|null;sourceTitle:string|null;sourceUrl:string|null;notes:string|null};
 export type ReaderVariant={unitKey:string;variantType:string;description:string|null;status:string;witnessLabel:string|null;readingText:string;normalizedText:string|null;notes:string|null;sourceTitle:string|null};
-export type ReaderUnit={stableKey:string;label:string|null;unitType:string;pathKey:string|null;witnessLabel:string|null;translationTitle:string|null;contents:ReaderContent[];variants:ReaderVariant[]};
+export type ReaderUnit={stableKey:string;label:string|null;unitType:string;pathKey:string|null;witnessLabel:string|null;translationTitle:string|null;editionTitle:string|null;editionYear:number|null;contents:ReaderContent[];variants:ReaderVariant[]};
 export type WorkCanonStatus={tradition:string|null;community:string|null;period:string|null;status:string;notes:string|null};
 
 export type WorkDetail=WorkListItem&{workId:string;traditions:string[];canonStatuses:WorkCanonStatus[];dates:Array<{earliest:number|null;latest:number|null;precision:string|null;method:string|null;confidence:string|null;notes:string|null}>;witnesses:Array<{stableKey:string;label:string|null;type:string;language:string|null;script:string|null;dateNote:string|null}>;units:ReaderUnit[];sources:Array<{title:string;sourceType:string;author:string|null;url:string|null;notes:string|null}>;relations:AtlasRelation[]};
@@ -284,7 +284,7 @@ export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
     query<any>("work_traditions",{select:"tradition_id,source_id",work_id:"eq."+workId}),
     query<any>("textual_witnesses",{select:"id,title_or_label,witness_type,language_id,script_id,date_note",work_id:"eq."+workId,order:"title_or_label.asc"}),
     query<any>("dating_assertions",{select:"earliest,latest,precision,dating_method,confidence_id,notes",entity_id:"eq."+workId,order:"earliest.asc"}),
-    query<any>("textual_units",{select:"id,witness_id,translation_id,unit_type,label,ordinal,path_key",order:"ordinal.asc.nullslast,path_key.asc"}),
+    query<any>("textual_units",{select:"id,witness_id,translation_id,edition_id,unit_type,label,ordinal,path_key",order:"ordinal.asc.nullslast,path_key.asc"}),
     query<any>("traditions",{select:"id,name"}),
     query<any>("languages",{select:"id,name,historical_name"}),
     query<any>("scripts",{select:"id,name"}),
@@ -312,6 +312,7 @@ export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
   const unitIds=[...new Set(readerUnits.map(u=>u.id))];
   const [translations,contents,variants]=await Promise.all([
     relevantTranslations.length?query<any>("translations",{select:"id,title",id:"in."+list(relevantTranslations)}):Promise.resolve([]),
+    query<any>("editions",{select:"id,title,publication_year",id:"in."+list([...new Set(readerUnits.map(u=>u.edition_id).filter(Boolean))])}):Promise.resolve([]),
     unitIds.length?query<any>("textual_unit_contents",{select:"textual_unit_id,representation_type,text_content,normalized_text,source_id,notes",textual_unit_id:"in."+list(unitIds)}):Promise.resolve([]),
     witnessUnits.length?query<any>("textual_variants",{select:"id,textual_unit_id,variant_type,description,status",textual_unit_id:"in."+list(witnessUnits.map(u=>u.id))}):Promise.resolve([])
   ]);
@@ -322,6 +323,7 @@ export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
   const entityById=new Map(allUnitEntities.map(e=>[e.id,e.stable_key]));
   const witnessById=new Map(witnesses.map(w=>[w.id,w]));
   const translationById=new Map(translations.map(t=>[t.id,t]));
+  const editionById=new Map(editions.map(e=>[e.id,e]));
   const languageById=new Map(languages.map(x=>[x.id,x.historical_name||x.name]));
   const scriptById=new Map(scripts.map(x=>[x.id,x.name]));
   const confidenceById=new Map(confidence.map(x=>[x.id,x.label]));
@@ -335,7 +337,8 @@ export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
   const unitsOut:ReaderUnit[]=readerUnits.sort((a,b)=>(a.ordinal??999999)-(b.ordinal??999999)).map(u=>{
     const w=u.witness_id?witnessById.get(u.witness_id):null;
     const t=u.translation_id?translationById.get(u.translation_id):null;
-    return {stableKey:entityById.get(u.id)||u.id,label:u.label,unitType:u.unit_type,pathKey:u.path_key,witnessLabel:w?.title_or_label||null,translationTitle:t?.title||null,contents:(contentByUnit.get(u.id)||[]).map(c=>({representationType:c.representation_type,textContent:c.text_content,normalizedText:c.normalized_text,sourceTitle:c.source_id?sourceById.get(c.source_id)?.title||null:null,sourceUrl:c.source_id?sourceById.get(c.source_id)?.url||null:null,notes:c.notes})),variants:(variantsByUnit.get(u.id)||[]).map(x=>({unitKey:entityById.get(u.id)||u.id,variantType:x.variant.variant_type,description:x.variant.description,status:x.variant.status,witnessLabel:witnessById.get(x.reading.witness_id)?.title_or_label||null,readingText:x.reading.reading_text,normalizedText:x.reading.normalized_text,notes:x.reading.notes,sourceTitle:x.sourceTitle}))};
+    const ed=u.edition_id?editionById.get(u.edition_id):null;
+    return {stableKey:entityById.get(u.id)||u.id,label:u.label,unitType:u.unit_type,pathKey:u.path_key,witnessLabel:w?.title_or_label||null,translationTitle:t?.title||null,editionTitle:ed?.title||null,editionYear:ed?.publication_year??null,contents:(contentByUnit.get(u.id)||[]).map(c=>({representationType:c.representation_type,textContent:c.text_content,normalizedText:c.normalized_text,sourceTitle:c.source_id?sourceById.get(c.source_id)?.title||null:null,sourceUrl:c.source_id?sourceById.get(c.source_id)?.url||null:null,notes:c.notes})),variants:(variantsByUnit.get(u.id)||[]).map(x=>({unitKey:entityById.get(u.id)||u.id,variantType:x.variant.variant_type,description:x.variant.description,status:x.variant.status,witnessLabel:witnessById.get(x.reading.witness_id)?.title_or_label||null,readingText:x.reading.reading_text,normalizedText:x.reading.normalized_text,notes:x.reading.notes,sourceTitle:x.sourceTitle}))};
   });
   const workTraditionIds=new Set(tradLinks.map(x=>x.tradition_id));
   return {stableKey,title:work.title,description:work.description,status:work.status,tradition:traditions.find(t=>workTraditionIds.has(t.id))?.name||null,witnessCount:witnesses.length,workId,traditions:traditions.filter(t=>workTraditionIds.has(t.id)).map(t=>t.name),canonStatuses:canonStatuses.map((x:any)=>({tradition:x.tradition_id?canonTraditionById.get(x.tradition_id)||null:null,community:x.community??null,period:x.period_id?canonPeriodById.get(x.period_id)||null:null,status:x.status,notes:x.notes??null})),dates:dates.map(d=>({earliest:d.earliest,latest:d.latest,precision:d.precision,method:d.dating_method,confidence:confidenceById.get(d.confidence_id)||null,notes:d.notes})),witnesses:witnesses.map(w=>({stableKey:entityById.get(w.id)||w.id,label:w.title_or_label,type:w.witness_type,language:languageById.get(w.language_id)||null,script:scriptById.get(w.script_id)||null,dateNote:w.date_note})),units:unitsOut,sources:sources.filter(s=>tradLinks.some(x=>x.source_id===s.id)).map(s=>({title:s.title,sourceType:s.source_type,author:s.author_text,url:s.url,notes:s.notes})),
