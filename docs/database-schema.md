@@ -55,3 +55,17 @@ La línea temporal unificada puede reunir:
 La datación continúa en `dating_assertions`, por lo que una entrada puede conservar varias propuestas independientes. La interfaz no convierte una de ellas en la fecha “verdadera”.
 
 Las fuentes de un acontecimiento se conservan mediante `historical_event_sources`.
+
+
+## 34. Historia del canon
+
+El estatus canónico se modela como una afirmación histórica dependiente de la obra, la tradición, la comunidad y el período. `canon_statuses` no establece un canon universal ni convierte `canonical` en una propiedad permanente de una obra.
+
+Un mismo texto puede tener varios registros para distintas comunidades o períodos. Cada registro puede conservar una fuente y un localizador. Los estados permitidos incluyen `canonical`, `accepted`, `disputed`, `rejected`, `used_liturgically`, `read_as_edifying`, `non_canonical` y `unknown`.
+
+Esto mantiene separadas dos preguntas que no deben confundirse:
+
+- **Canon:** qué estatus tuvo una obra dentro de una comunidad y período.
+- **Transmisión textual:** qué lecturas aparecen en manuscritos, ediciones y traducciones.
+
+Por ello, una diferencia entre Biblias puede deberse a traducción, edición o variante textual sin implicar por sí misma un cambio de canon.
