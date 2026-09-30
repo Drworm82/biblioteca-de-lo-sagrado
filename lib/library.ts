@@ -21,7 +21,9 @@ export type WorkListItem={stableKey:string;title:string;description:string|null;
 export type ReaderContent={representationType:string;textContent:string;normalizedText:string|null;sourceTitle:string|null;sourceUrl:string|null;notes:string|null};
 export type ReaderVariant={unitKey:string;variantType:string;description:string|null;status:string;witnessLabel:string|null;readingText:string;normalizedText:string|null;notes:string|null;sourceTitle:string|null};
 export type ReaderUnit={stableKey:string;label:string|null;unitType:string;pathKey:string|null;witnessLabel:string|null;translationTitle:string|null;contents:ReaderContent[];variants:ReaderVariant[]};
-export type WorkDetail=WorkListItem&{workId:string;traditions:string[];dates:Array<{earliest:number|null;latest:number|null;precision:string|null;method:string|null;confidence:string|null;notes:string|null}>;witnesses:Array<{stableKey:string;label:string|null;type:string;language:string|null;script:string|null;dateNote:string|null}>;units:ReaderUnit[];sources:Array<{title:string;sourceType:string;author:string|null;url:string|null;notes:string|null}>;relations:AtlasRelation[]};
+export type WorkCanonStatus={tradition:string|null;community:string|null;period:string|null;status:string;notes:string|null};
+
+export type WorkDetail=WorkListItem&{workId:string;traditions:string[];canonStatuses:WorkCanonStatus[];dates:Array<{earliest:number|null;latest:number|null;precision:string|null;method:string|null;confidence:string|null;notes:string|null}>;witnesses:Array<{stableKey:string;label:string|null;type:string;language:string|null;script:string|null;dateNote:string|null}>;units:ReaderUnit[];sources:Array<{title:string;sourceType:string;author:string|null;url:string|null;notes:string|null}>;relations:AtlasRelation[]};
 
 export async function listWorks():Promise<WorkListItem[]>{
   const [works,entities,links,traditions,witnesses]=await Promise.all([
@@ -204,6 +206,15 @@ export async function getAtlasDetail(kind:"evidence"|"event",stableKey:string):P
     query<any>("confidence_levels",{select:"id,label"})
   ]);
   const confidenceById=new Map(confidence.map(x=>[x.id,x.label]));
+  const canonTraditionIds=[...new Set(canonStatuses.map(x=>x.tradition_id).filter(Boolean))];
+  const canonPeriodIds=[...new Set(canonStatuses.map(x=>x.period_id).filter(Boolean))];
+  const [canonTraditions,canonPeriods]=await Promise.all([
+    canonTraditionIds.length?query<any>("traditions",{select:"id,name",id:"in."+list(canonTraditionIds)}):Promise.resolve([]),
+    canonPeriodIds.length?query<any>("periods",{select:"id,name",id:"in."+list(canonPeriodIds)}):Promise.resolve([])
+  ]);
+  const canonTraditionById=new Map(canonTraditions.map(x=>[x.id,x.name]));
+  const canonPeriodById=new Map(canonPeriods.map(x=>[x.id,x.name]));
+
   let title="",type="",description="",observation:string|null=null,notes:string|null=null,sourceLinks:any[]=[];
   let entityConfidence:string|null=null;
   if(kind==="evidence"){
@@ -289,7 +300,8 @@ export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
     query<any>("translation_sources",{select:"translation_id,edition_id,witness_id,source_type,notes"}),
     query<any>("edition_witnesses",{select:"edition_id,witness_id"}),
     query<any>("entities",{select:"id,stable_key,entity_type"}),
-    query<any>("relations",{select:"subject_entity_id,predicate,object_entity_id,confidence_id,status,notes",or:"(subject_entity_id.eq."+workId+",object_entity_id.eq."+workId+")"})
+    query<any>("relations",{select:"subject_entity_id,predicate,object_entity_id,confidence_id,status,notes",or:"(subject_entity_id.eq."+workId+",object_entity_id.eq."+workId+")"}),
+    query<any>("canon_statuses",{select:"tradition_id,community,period_id,status,notes",work_id:"eq."+workId})
   ]);
   const work=works[0];if(!work)return null;
   const witnessIds=witnesses.map(w=>w.id);
