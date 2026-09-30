@@ -10,11 +10,11 @@ function year(y:number|null){
 }
 function label(v:string,kind:string){
   const maps:Record<string,Record<string,string>>={
-    status:{documented:"Documentado",proposed:"Propuesto",accepted:"Aceptado",rejected:"Rechazado"},
-    evidenceType:{material:"Material",archaeological:"Arqueológica",textual:"Textual",linguistic:"Lingüística",geological:"Geológica",bioarchaeological:"Bioarqueológica"},
+    status:{documented:"Documentado",proposed:"Propuesto",accepted:"Aceptado",rejected:"Rechazado",hypothesis:"Hipótesis",attributed:"Atribuido"},
+    evidenceType:{material:"Material",archaeological:"Arqueológica",textual:"Textual",linguistic:"Lingüística",geological:"Geológica",bioarchaeological:"Bioarqueológica",archaeological_observation:"Observación arqueológica",textual_comparison:"Comparación textual"},
     eventType:{historical:"Histórico",political:"Político",religious:"Religioso",cultural:"Cultural",military:"Militar"},
     relation:{context:"Contexto",influence:"Influencia",dependence:"Dependencia",parallel:"Paralelo",reinterpretation:"Reinterpretación",syncretism:"Sincretismo"},
-    sourceType:{critical_edition:"Edición crítica",textual_reference:"Referencia textual",editorial_translation:"Traducción editorial"}
+    sourceType:{critical_edition:"Edición crítica",textual_reference:"Referencia textual",editorial_translation:"Traducción editorial",academic_chapter:"Capítulo académico",academic_monograph:"Monografía académica",academic_reference:"Referencia académica",manuscript_catalog:"Catálogo de manuscritos",peer_reviewed_article:"Artículo académico revisado por pares",scholarly_edition:"Edición académica",scholarly_reference:"Referencia académica"}
   };
   return maps[kind]?.[v]??v
 }
