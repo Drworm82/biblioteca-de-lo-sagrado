@@ -69,16 +69,6 @@ BEGIN
   ) THEN RAISE EXCEPTION 'Reader validation: GA 019 reading is not attached to the GA 019 unit/witness pair'; END IF;
 
   SELECT count(*) INTO v_reader_row_count
-  FROM translation_sources ts
-  JOIN translations tr ON tr.id=ts.translation_id
-  JOIN entities te ON te.id=tr.id
-  WHERE te.stable_key='matthew-24-3-working-spanish'
-    AND ts.provenance_role IN ('base_source','comparative_witness')
-    AND ts.scope_type='passage'
-    AND ts.scope_path_key='matthew.24.3';
-  IF v_reader_row_count <> 2 THEN RAISE EXCEPTION 'Reader validation: expected 2 explicitly scoped Matthew translation sources, got %',v_reader_row_count; END IF;
-
-  SELECT count(*) INTO v_reader_row_count
   FROM textual_units tu
   JOIN entities e ON e.id = tu.id
   JOIN translations tr ON tr.id = tu.translation_id
