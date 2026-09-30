@@ -287,7 +287,7 @@ export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
   const found=await query<any>("entities",{select:"id,stable_key",entity_type:"eq.work",stable_key:"eq."+stableKey,limit:"1"});
   if(!found[0])return null;
   const workId=found[0].id;
-  const [works,tradLinks,witnesses,dates,units,traditions,languages,scripts,confidence,translationSources,editionWitnesses,allUnitEntities,relations]=await Promise.all([
+  const [works,tradLinks,witnesses,dates,units,traditions,languages,scripts,confidence,translationSources,editionWitnesses,allUnitEntities,relations,canonStatuses]=await Promise.all([
     query<any>("works",{select:"id,title,description,status",id:"eq."+workId,limit:"1"}),
     query<any>("work_traditions",{select:"tradition_id,source_id",work_id:"eq."+workId}),
     query<any>("textual_witnesses",{select:"id,title_or_label,witness_type,language_id,script_id,date_note",work_id:"eq."+workId,order:"title_or_label.asc"}),
