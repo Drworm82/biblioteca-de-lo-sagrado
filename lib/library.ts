@@ -206,14 +206,6 @@ export async function getAtlasDetail(kind:"evidence"|"event",stableKey:string):P
     query<any>("confidence_levels",{select:"id,label"})
   ]);
   const confidenceById=new Map(confidence.map(x=>[x.id,x.label]));
-  const canonTraditionIds=[...new Set(canonStatuses.map(x=>x.tradition_id).filter(Boolean))];
-  const canonPeriodIds=[...new Set(canonStatuses.map(x=>x.period_id).filter(Boolean))];
-  const [canonTraditions,canonPeriods]=await Promise.all([
-    canonTraditionIds.length?query<any>("traditions",{select:"id,name",id:"in."+list(canonTraditionIds)}):Promise.resolve([]),
-    canonPeriodIds.length?query<any>("periods",{select:"id,name",id:"in."+list(canonPeriodIds)}):Promise.resolve([])
-  ]);
-  const canonTraditionById=new Map(canonTraditions.map(x=>[x.id,x.name]));
-  const canonPeriodById=new Map(canonPeriods.map(x=>[x.id,x.name]));
 
   let title="",type="",description="",observation:string|null=null,notes:string|null=null,sourceLinks:any[]=[];
   let entityConfidence:string|null=null;
@@ -304,6 +296,15 @@ export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
     query<any>("canon_statuses",{select:"tradition_id,community,period_id,status,notes",work_id:"eq."+workId})
   ]);
   const work=works[0];if(!work)return null;
+  const canonTraditionIds=[...new Set(canonStatuses.map((x:any)=>x.tradition_id).filter(Boolean))];
+  const canonPeriodIds=[...new Set(canonStatuses.map((x:any)=>x.period_id).filter(Boolean))];
+  const [canonTraditions,canonPeriods]=await Promise.all([
+    canonTraditionIds.length?query<any>("traditions",{select:"id,name",id:"in."+list(canonTraditionIds)}):Promise.resolve([]),
+    canonPeriodIds.length?query<any>("periods",{select:"id,name",id:"in."+list(canonPeriodIds)}):Promise.resolve([])
+  ]);
+  const canonTraditionById=new Map(canonTraditions.map(x=>[x.id,x.name]));
+  const canonPeriodById=new Map(canonPeriods.map(x=>[x.id,x.name]));
+
   const witnessIds=witnesses.map(w=>w.id);
   const witnessUnits=units.filter(u=>witnessIds.includes(u.witness_id));
   const relevantTranslations=[...new Set(translationSources.filter(ts=>witnessIds.includes(ts.witness_id)||editionWitnesses.some(ew=>ew.edition_id===ts.edition_id&&witnessIds.includes(ew.witness_id))).map(ts=>ts.translation_id))];
