@@ -8,6 +8,7 @@ function year(y:number|null){
   if(y===null)return"—";
   return y<=0?String(Math.abs(y)+1)+" a. C.":String(y)+" d. C.";
 }
+function label(v:string,kind:string){const maps:Record<string,Record<string,string>>={status:{documented:"Documentado",proposed:"Propuesto",accepted:"Aceptado",rejected:"Rechazado"},sourceType:{critical_edition:"Edición crítica",textual_reference:"Referencia textual",editorial_translation:"Traducción editorial"}};return maps[kind]?.[v]??v}
 function range(a:number|null,b:number|null){
   if(a===null&&b===null)return"Fecha no registrada";
   if(a===b||b===null)return year(a);
@@ -33,7 +34,7 @@ export default async function AtlasDetailPage({params}:{params:Promise<{kind:str
         <div className="panel">
           <h2>Registro</h2>
           <dl className="metadata">
-            <div><dt>Tipo</dt><dd>{detail.type}</dd></div>
+            <div><dt>Tipo</dt><dd>{label(detail.type,"status")}</dd></div>
             {detail.observation?<div><dt>Observación</dt><dd>{detail.observation}</dd></div>:null}
             {detail.notes?<div><dt>Notas</dt><dd>{detail.notes}</dd></div>:null}
             {detail.confidence?<div><dt>Confianza</dt><dd>{detail.confidence}</dd></div>:null}
@@ -54,13 +55,13 @@ export default async function AtlasDetailPage({params}:{params:Promise<{kind:str
         </div>:null}
         <div className="panel">
           <h2>Relaciones registradas</h2>
-          {detail.relations.length===0?<div className="empty">No hay relaciones registradas todavía.</div>:<div className="unit-list">{detail.relations.map((r,i)=><div className="unit" key={r.stableKey+"|"+r.relation+"|"+i}><small>{r.direction==="hacia"?"Relación hacia":"Relación desde"} · {r.relation}</small>{r.href?<Link href={r.href}><h3>{r.label} →</h3></Link>:<h3>{r.label}</h3>}<small>{[r.entityType,r.confidence,r.status].filter(Boolean).join(" · ")}</small>{r.notes?<p>{r.notes}</p>:null}</div>)}</div>}
+          {detail.relations.length===0?<div className="empty">No hay relaciones registradas todavía.</div>:<div className="unit-list">{detail.relations.map((r,i)=><div className="unit" key={r.stableKey+"|"+r.relation+"|"+i}><small>{r.direction==="hacia"?"Relación hacia":"Relación desde"} · {r.relation}</small>{r.href?<Link href={r.href}><h3>{r.label} →</h3></Link>:<h3>{r.label}</h3>}<small>{[r.entityType,r.confidence,label(r.status,"status")].filter(Boolean).join(" · ")}</small>{r.notes?<p>{r.notes}</p>:null}</div>)}</div>}
         </div>
       </section>
       <aside>
         <div className="panel">
           <h2>Fuentes</h2>
-          {detail.sources.length===0?<div className="empty">No hay fuentes vinculadas todavía.</div>:<div className="source-list">{detail.sources.map(s=><div className="source-item" key={s.title}><h3>{s.title}</h3><small>{s.author??"Autor no registrado"} · {s.sourceType}</small>{s.notes?<p>{s.notes}</p>:null}{s.url?<p><a href={s.url} target="_blank" rel="noreferrer">Fuente externa</a></p>:null}</div>)}</div>}
+          {detail.sources.length===0?<div className="empty">No hay fuentes vinculadas todavía.</div>:<div className="source-list">{detail.sources.map(s=><div className="source-item" key={s.title}><h3>{s.title}</h3><small>{s.author??"Autor no registrado"} · {label(s.sourceType,"sourceType")}</small>{s.notes?<p>{s.notes}</p>:null}{s.url?<p><a href={s.url} target="_blank" rel="noreferrer">Fuente externa</a></p>:null}</div>)}</div>}
         </div>
         <div className="panel">
           <h2>Lectura del registro</h2>
