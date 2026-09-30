@@ -21,7 +21,7 @@ export type WorkListItem={stableKey:string;title:string;description:string|null;
 export type ReaderContent={representationType:string;textContent:string;normalizedText:string|null;sourceTitle:string|null;sourceUrl:string|null;notes:string|null};
 export type ReaderVariant={unitKey:string;variantType:string;description:string|null;status:string;witnessLabel:string|null;readingText:string;normalizedText:string|null;notes:string|null;sourceTitle:string|null};
 export type ReaderUnit={stableKey:string;label:string|null;unitType:string;pathKey:string|null;witnessLabel:string|null;translationTitle:string|null;contents:ReaderContent[];variants:ReaderVariant[]};
-export type WorkDetail=WorkListItem&{workId:string;traditions:string[];dates:Array<{earliest:number|null;latest:number|null;precision:string|null;method:string|null;confidence:string|null;notes:string|null}>;witnesses:Array<{stableKey:string;label:string|null;type:string;language:string|null;script:string|null;dateNote:string|null}>;units:ReaderUnit[];sources:Array<{title:string;sourceType:string;author:string|null;url:string|null;notes:string|null}>;relations:AtlasRelation[];claims:EvidenceChainItem[];interpretations:EvidenceChainItem[];hypotheses:EvidenceChainItem[]};
+export type WorkDetail=WorkListItem&{workId:string;traditions:string[];dates:Array<{earliest:number|null;latest:number|null;precision:string|null;method:string|null;confidence:string|null;notes:string|null}>;witnesses:Array<{stableKey:string;label:string|null;type:string;language:string|null;script:string|null;dateNote:string|null}>;units:ReaderUnit[];sources:Array<{title:string;sourceType:string;author:string|null;url:string|null;notes:string|null}>;relations:AtlasRelation[]};
 
 export async function listWorks():Promise<WorkListItem[]>{
   const [works,entities,links,traditions,witnesses]=await Promise.all([
@@ -182,6 +182,9 @@ export type AtlasDetail = {
   dates:Array<{earliest:number|null;latest:number|null;precision:string|null;method:string|null;confidence:string|null;notes:string|null}>;
   sources:Array<{title:string;author:string|null;sourceType:string;url:string|null;notes:string|null}>;
   relations:AtlasRelation[];
+  claims:EvidenceChainItem[];
+  interpretations:EvidenceChainItem[];
+  hypotheses:EvidenceChainItem[];
 };
 
 function entityHref(entityType:string,stableKey:string){
