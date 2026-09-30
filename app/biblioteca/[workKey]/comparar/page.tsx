@@ -20,6 +20,15 @@ function ordered(unit:ReaderUnit){
   });
 }
 
+function provenance(unit:ReaderUnit){
+  const parts:string[]=[];
+  if(unit.witnessLabel)parts.push("Testigo: "+unit.witnessLabel);
+  if(unit.editionTitle)parts.push("Edición: "+unit.editionTitle+(unit.editionYear?" ("+unit.editionYear+")":""));
+  if(unit.translationTitle)parts.push("Traducción: "+unit.translationTitle);
+  if(unit.translationRevisionLabel)parts.push("Revisión: "+unit.translationRevisionLabel+(unit.translationRevisionYear?" ("+unit.translationRevisionYear+")":""));
+  return parts;
+}
+
 export default async function ComparePage({params}:{params:Promise<{workKey:string}>}){
   const {workKey}=await params;
   const work=await getWorkDetail(workKey);
@@ -42,6 +51,7 @@ export default async function ComparePage({params}:{params:Promise<{workKey:stri
                 <div><span className="tag">Comparación</span><h3>{u.label??u.stableKey}</h3></div>
                 <small>{u.editionTitle??u.witnessLabel??u.translationTitle??"Unidad editorial"}</small>
               </div>
+              {provenance(u).length>0?<div className="unit-provenance">{provenance(u).map(item=><small key={item}>{item}</small>)}</div>:null}
               {u.contents.length===0?<div className="empty">No hay representaciones registradas para esta unidad.</div>:
                 <div className="reader-content reader-parallel">{ordered(u).map(c=><div className="text-layer" key={c.representationType}>
                   <div className="text-layer-label">{representationLabels[c.representationType]??c.representationType}</div>
@@ -62,6 +72,7 @@ export default async function ComparePage({params}:{params:Promise<{workKey:stri
             <div><dt>Texto crítico</dt><dd>Una representación editorial basada en la evaluación de testimonios y variantes.</dd></div>
             <div><dt>Transliteración</dt><dd>Representación del texto en otro sistema de escritura.</dd></div>
             <div><dt>Traducción</dt><dd>Una representación en otra lengua; puede haber más de una.</dd></div>
+            <div><dt>Revisión de traducción</dt><dd>Un estado editorial concreto de una traducción, separado de la obra traducida y de su publicación.</dd></div>
             <div><dt>Variante</dt><dd>Una lectura documentada en un testimonio, separada de la selección editorial.</dd></div>
           </dl>
         </div>
