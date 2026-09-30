@@ -63,15 +63,19 @@ ON CONFLICT DO NOTHING;
 
 INSERT INTO entities(entity_type,stable_key) VALUES
 ('unit','matthew-24-3-working-spanish'),('unit','matthew-24-4-working-spanish'),('unit','matthew-24-5-working-spanish'),
+('unit','matthew-24-3-westcott-hort'),('unit','matthew-24-4-westcott-hort'),('unit','matthew-24-5-westcott-hort'),
 ('unit_content','matthew-24-3-working-spanish-close'),('unit_content','matthew-24-3-working-spanish-readable'),
 ('unit_content','matthew-24-4-working-spanish-close'),('unit_content','matthew-24-4-working-spanish-readable'),
 ('unit_content','matthew-24-5-working-spanish-close'),('unit_content','matthew-24-5-working-spanish-readable')
 ON CONFLICT (entity_type,stable_key) DO NOTHING;
 
-INSERT INTO textual_units(id,parent_id,witness_id,translation_id,unit_type,label,ordinal,path_key) VALUES
-(pg_temp.entity_id('unit','matthew-24-3-working-spanish'),NULL,NULL,pg_temp.entity_id('translation','matthew-working-spanish'),'verse','Mateo 24:3',3,'matthew.24.3'),
-(pg_temp.entity_id('unit','matthew-24-4-working-spanish'),NULL,NULL,pg_temp.entity_id('translation','matthew-working-spanish'),'verse','Mateo 24:4',4,'matthew.24.4'),
-(pg_temp.entity_id('unit','matthew-24-5-working-spanish'),NULL,NULL,pg_temp.entity_id('translation','matthew-working-spanish'),'verse','Mateo 24:5',5,'matthew.24.5')
+INSERT INTO textual_units(id,parent_id,witness_id,translation_id,edition_id,unit_type,label,ordinal,path_key) VALUES
+(pg_temp.entity_id('unit','matthew-24-3-working-spanish'),NULL,NULL,pg_temp.entity_id('translation','matthew-working-spanish'),NULL,'verse','Mateo 24:3',3,'matthew.24.3'),
+(pg_temp.entity_id('unit','matthew-24-4-working-spanish'),NULL,NULL,pg_temp.entity_id('translation','matthew-working-spanish'),NULL,'verse','Mateo 24:4',4,'matthew.24.4'),
+(pg_temp.entity_id('unit','matthew-24-5-working-spanish'),NULL,NULL,pg_temp.entity_id('translation','matthew-working-spanish'),NULL,'verse','Mateo 24:5',5,'matthew.24.5'),
+(pg_temp.entity_id('unit','matthew-24-3-westcott-hort'),NULL,NULL,NULL,pg_temp.entity_id('edition','westcott-hort-1881'),'verse','Mateo 24:3',3,'matthew.24.3'),
+(pg_temp.entity_id('unit','matthew-24-4-westcott-hort'),NULL,NULL,NULL,pg_temp.entity_id('edition','westcott-hort-1881'),'verse','Mateo 24:4',4,'matthew.24.4'),
+(pg_temp.entity_id('unit','matthew-24-5-westcott-hort'),NULL,NULL,NULL,pg_temp.entity_id('edition','westcott-hort-1881'),'verse','Mateo 24:5',5,'matthew.24.5')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO entities(entity_type,stable_key) VALUES
@@ -84,12 +88,12 @@ INSERT INTO entities(entity_type,stable_key) VALUES
 ON CONFLICT (entity_type,stable_key) DO NOTHING;
 
 INSERT INTO textual_unit_contents(id,textual_unit_id,representation_type,text_content,normalized_text,source_id,notes) VALUES
-(pg_temp.entity_id('unit_content','matthew-24-3-critical-text'),pg_temp.entity_id('unit','matthew-24-3-working-spanish'),'critical_text','Καθημένου δὲ αὐτοῦ ἐπὶ τοῦ Ὄρους τῶν Ἐλαιῶν προσῆλθον αὐτῷ οἱ μαθηταὶ κατ’ ἰδίαν λέγοντες· Εἰπὸν ἡμῖν πότε ταῦτα ἔσται, καὶ τί τὸ σημεῖον τῆς σῆς παρουσίας καὶ συντελείας τοῦ αἰῶνος.',NULL,pg_temp.entity_id('source','westcott-hort-1881'),'Westcott-Hort 1881. Se conserva como edición crítica histórica, no como una lectura manuscrita individual.'),
-(pg_temp.entity_id('unit_content','matthew-24-3-transliteration'),pg_temp.entity_id('unit','matthew-24-3-working-spanish'),'transliteration','Kathēmenou de autou epi tou Orous tōn Elaiōn prosēlthon autō hoi mathētai kat’ idian legontes: Eipon hēmin pote tauta estai, kai ti to sēmeion tēs sēs parousias kai synteleias tou aiōnos.',NULL,pg_temp.entity_id('source','westcott-hort-1881'),'Transliteración de trabajo del texto crítico registrado.'),
-(pg_temp.entity_id('unit_content','matthew-24-4-critical-text'),pg_temp.entity_id('unit','matthew-24-4-working-spanish'),'critical_text','καὶ ἀποκριθεὶς ὁ Ἰησοῦς εἶπεν αὐτοῖς· Βλέπετε μή τις ὑμᾶς πλανήσῃ.',NULL,pg_temp.entity_id('source','westcott-hort-1881'),'Westcott-Hort 1881.'),
-(pg_temp.entity_id('unit_content','matthew-24-4-transliteration'),pg_temp.entity_id('unit','matthew-24-4-working-spanish'),'transliteration','Kai apokritheis ho Iēsous eipen autois: Blepete mē tis hymas planēsē.',NULL,pg_temp.entity_id('source','westcott-hort-1881'),'Transliteración de trabajo del texto crítico registrado.'),
-(pg_temp.entity_id('unit_content','matthew-24-5-critical-text'),pg_temp.entity_id('unit','matthew-24-5-working-spanish'),'critical_text','πολλοὶ γὰρ ἐλεύσονται ἐπὶ τῷ ὀνόματί μου λέγοντες· Ἐγώ εἰμι ὁ χριστός, καὶ πολλοὺς πλανήσουσιν.',NULL,pg_temp.entity_id('source','westcott-hort-1881'),'Westcott-Hort 1881.'),
-(pg_temp.entity_id('unit_content','matthew-24-5-transliteration'),pg_temp.entity_id('unit','matthew-24-5-working-spanish'),'transliteration','Polloi gar eleusontai epi tō onomati mou legontes: Egō eimi ho christos, kai pollous planēsousin.',NULL,pg_temp.entity_id('source','westcott-hort-1881'),'Transliteración de trabajo del texto crítico registrado.');
+(pg_temp.entity_id('unit_content','matthew-24-3-critical-text'),pg_temp.entity_id('unit','matthew-24-3-westcott-hort'),'critical_text','Καθημένου δὲ αὐτοῦ ἐπὶ τοῦ Ὄρους τῶν Ἐλαιῶν προσῆλθον αὐτῷ οἱ μαθηταὶ κατ’ ἰδίαν λέγοντες· Εἰπὸν ἡμῖν πότε ταῦτα ἔσται, καὶ τί τὸ σημεῖον τῆς σῆς παρουσίας καὶ συντελείας τοῦ αἰῶνος.',NULL,pg_temp.entity_id('source','westcott-hort-1881'),'Westcott-Hort 1881. Se conserva como edición crítica histórica, no como una lectura manuscrita individual.'),
+(pg_temp.entity_id('unit_content','matthew-24-3-transliteration'),pg_temp.entity_id('unit','matthew-24-3-westcott-hort'),'transliteration','Kathēmenou de autou epi tou Orous tōn Elaiōn prosēlthon autō hoi mathētai kat’ idian legontes: Eipon hēmin pote tauta estai, kai ti to sēmeion tēs sēs parousias kai synteleias tou aiōnos.',NULL,pg_temp.entity_id('source','westcott-hort-1881'),'Transliteración de trabajo del texto crítico registrado.'),
+(pg_temp.entity_id('unit_content','matthew-24-4-critical-text'),pg_temp.entity_id('unit','matthew-24-4-westcott-hort'),'critical_text','καὶ ἀποκριθεὶς ὁ Ἰησοῦς εἶπεν αὐτοῖς· Βλέπετε μή τις ὑμᾶς πλανήσῃ.',NULL,pg_temp.entity_id('source','westcott-hort-1881'),'Westcott-Hort 1881.'),
+(pg_temp.entity_id('unit_content','matthew-24-4-transliteration'),pg_temp.entity_id('unit','matthew-24-4-westcott-hort'),'transliteration','Kai apokritheis ho Iēsous eipen autois: Blepete mē tis hymas planēsē.',NULL,pg_temp.entity_id('source','westcott-hort-1881'),'Transliteración de trabajo del texto crítico registrado.'),
+(pg_temp.entity_id('unit_content','matthew-24-5-critical-text'),pg_temp.entity_id('unit','matthew-24-5-westcott-hort'),'critical_text','πολλοὶ γὰρ ἐλεύσονται ἐπὶ τῷ ὀνόματί μου λέγοντες· Ἐγώ εἰμι ὁ χριστός, καὶ πολλοὺς πλανήσουσιν.',NULL,pg_temp.entity_id('source','westcott-hort-1881'),'Westcott-Hort 1881.'),
+(pg_temp.entity_id('unit_content','matthew-24-5-transliteration'),pg_temp.entity_id('unit','matthew-24-5-westcott-hort'),'transliteration','Polloi gar eleusontai epi tō onomati mou legontes: Egō eimi ho christos, kai pollous planēsousin.',NULL,pg_temp.entity_id('source','westcott-hort-1881'),'Transliteración de trabajo del texto crítico registrado.');
 
 INSERT INTO textual_unit_contents(id,textual_unit_id,representation_type,text_content,normalized_text,source_id,notes) VALUES
 (pg_temp.entity_id('unit_content','matthew-24-3-working-spanish-close'),pg_temp.entity_id('unit','matthew-24-3-working-spanish'),'close_translation','Mientras estaba sentado en el monte de los Olivos, se le acercaron los discípulos en privado, diciendo: «Dinos cuándo serán estas cosas, y cuál es la señal de tu presencia y de la consumación de la era».',NULL,pg_temp.entity_id('source','biblioteca-matthew-working-translation'),'Traducción propia. «αἰών» se representa aquí como «era»; no se equipara automáticamente con «mundo».'),
