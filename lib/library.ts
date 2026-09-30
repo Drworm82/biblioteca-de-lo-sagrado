@@ -308,7 +308,7 @@ export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
   const witnessIds=witnesses.map(w=>w.id);
   const witnessUnits=units.filter(u=>witnessIds.includes(u.witness_id));
   const relevantTranslations=[...new Set(translationSources.filter(ts=>witnessIds.includes(ts.witness_id)||editionWitnesses.some(ew=>ew.edition_id===ts.edition_id&&witnessIds.includes(ew.witness_id))).map(ts=>ts.translation_id))];
-  const readerUnits=[...witnessUnits,...units.filter(u=>u.translation_id&&relevantTranslations.includes(u.translation_id))];
+  const readerUnits=[...witnessUnits,...units.filter(u=>(u.translation_id&&relevantTranslations.includes(u.translation_id))||u.edition_id)];
   const unitIds=[...new Set(readerUnits.map(u=>u.id))];
   const [translations,editions,contents,variants]=await Promise.all([
     relevantTranslations.length?query<any>("translations",{select:"id,title",id:"in."+list(relevantTranslations)}):Promise.resolve([]),
