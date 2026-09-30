@@ -124,7 +124,7 @@ INSERT INTO traditions(id,name,description,tradition_type) VALUES
 
 INSERT INTO works(id,title,description,status) VALUES
 (pg_temp.entity_id('work','genesis'),'Genesis','Obra bíblica transmitida en múltiples testigos hebreos y griegos.','cataloged'),
-(pg_temp.entity_id('work','gospel-of-matthew'),'Gospel of Matthew','Obra cristiana antigua conservada en múltiples testimonios manuscritos y versiones.','cataloged'),
+(pg_temp.entity_id('work','gospel-of-matthew'),'Evangelio según Mateo','Obra cristiana antigua conservada en múltiples testimonios manuscritos y versiones.','cataloged'),
 (pg_temp.entity_id('work','gospel-of-thomas'),'Gospel of Thomas','Colección de dichos conservada en un testimonio copto completo y tres fragmentos griegos.','cataloged'),
 (pg_temp.entity_id('work','atrahasis'),'Atrahasis','Tradición literaria mesopotámica que contiene un relato del diluvio.','cataloged'),
 (pg_temp.entity_id('work','gilgamesh'),'Epic of Gilgamesh','Tradición literaria mesopotámica con un episodio del diluvio en la versión estándar.','cataloged'),
