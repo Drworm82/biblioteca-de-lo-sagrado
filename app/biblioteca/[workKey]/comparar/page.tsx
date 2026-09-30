@@ -40,7 +40,7 @@ export default async function ComparePage({params}:{params:Promise<{workKey:stri
             {work.units.map(u=><article className="reader-unit" key={u.stableKey}>
               <div className="reader-heading">
                 <div><span className="tag">Comparación</span><h3>{u.label??u.stableKey}</h3></div>
-                <small>{u.witnessLabel??u.translationTitle??"Unidad editorial"}</small>
+                <small>{u.editionTitle??u.witnessLabel??u.translationTitle??"Unidad editorial"}</small>
               </div>
               {u.contents.length===0?<div className="empty">No hay representaciones registradas para esta unidad.</div>:
                 <div className="reader-content reader-parallel">{ordered(u).map(c=><div className="text-layer" key={c.representationType}>
