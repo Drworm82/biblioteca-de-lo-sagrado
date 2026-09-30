@@ -310,7 +310,7 @@ export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
   const relevantTranslations=[...new Set(translationSources.filter(ts=>witnessIds.includes(ts.witness_id)||editionWitnesses.some(ew=>ew.edition_id===ts.edition_id&&witnessIds.includes(ew.witness_id))).map(ts=>ts.translation_id))];
   const readerUnits=[...witnessUnits,...units.filter(u=>u.translation_id&&relevantTranslations.includes(u.translation_id))];
   const unitIds=[...new Set(readerUnits.map(u=>u.id))];
-  const [translations,contents,variants]=await Promise.all([
+  const [translations,editions,contents,variants]=await Promise.all([
     relevantTranslations.length?query<any>("translations",{select:"id,title",id:"in."+list(relevantTranslations)}):Promise.resolve([]),
     query<any>("editions",{select:"id,title,publication_year",id:"in."+list([...new Set(readerUnits.map(u=>u.edition_id).filter(Boolean))])}):Promise.resolve([]),
     unitIds.length?query<any>("textual_unit_contents",{select:"textual_unit_id,representation_type,text_content,normalized_text,source_id,notes",textual_unit_id:"in."+list(unitIds)}):Promise.resolve([]),
