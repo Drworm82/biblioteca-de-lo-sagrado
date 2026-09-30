@@ -38,7 +38,7 @@ jobs:
             cat /tmp/biblioteca-next.log
             exit 1
           fi
-          grep -F "Gospel of Matthew" /tmp/reader.html
+          grep -F "Evangelio según Mateo" /tmp/reader.html
           grep -F "Εἰπον ἡμῖν" /tmp/reader.html
           grep -F "Eipon hēmin" /tmp/reader.html
           grep -F "Mateo 24:3" /tmp/reader.html
