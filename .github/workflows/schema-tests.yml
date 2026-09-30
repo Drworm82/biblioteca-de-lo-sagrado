@@ -63,6 +63,7 @@ jobs:
           psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0010_spanish_corpus_labels.sql
           psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0011_textual_unit_editions.sql
           psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0012_move_matthew_critical_text_to_edition.sql
+          psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0013_translation_revisions.sql
       - name: Run schema smoke tests
         env:
           PGPASSWORD: postgres
