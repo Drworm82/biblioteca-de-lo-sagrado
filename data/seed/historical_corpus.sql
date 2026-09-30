@@ -123,12 +123,12 @@ INSERT INTO traditions(id,name,description,tradition_type) VALUES
 ;
 
 INSERT INTO works(id,title,description,status) VALUES
-(pg_temp.entity_id('work','genesis'),'Genesis','Obra bíblica transmitida en múltiples testigos hebreos y griegos.','cataloged'),
+(pg_temp.entity_id('work','genesis'),'Génesis','Obra bíblica transmitida en múltiples testigos hebreos y griegos.','cataloged'),
 (pg_temp.entity_id('work','gospel-of-matthew'),'Evangelio según Mateo','Obra cristiana antigua conservada en múltiples testimonios manuscritos y versiones.','cataloged'),
-(pg_temp.entity_id('work','gospel-of-thomas'),'Gospel of Thomas','Colección de dichos conservada en un testimonio copto completo y tres fragmentos griegos.','cataloged'),
+(pg_temp.entity_id('work','gospel-of-thomas'),'Evangelio de Tomás','Colección de dichos conservada en un testimonio copto completo y tres fragmentos griegos.','cataloged'),
 (pg_temp.entity_id('work','atrahasis'),'Atrahasis','Tradición literaria mesopotámica que contiene un relato del diluvio.','cataloged'),
-(pg_temp.entity_id('work','gilgamesh'),'Epic of Gilgamesh','Tradición literaria mesopotámica con un episodio del diluvio en la versión estándar.','cataloged'),
-(pg_temp.entity_id('work','babyloniaca'),'Babyloniaca of Berossus','Obra helenística incluida como testimonio comparativo del motivo del diluvio.','cataloged')
+(pg_temp.entity_id('work','gilgamesh'),'Epopeya de Gilgamesh','Tradición literaria mesopotámica con un episodio del diluvio en la versión estándar.','cataloged'),
+(pg_temp.entity_id('work','babyloniaca'),'Babyloniaca de Beroso','Obra helenística incluida como testimonio comparativo del motivo del diluvio.','cataloged')
 ;
 
 INSERT INTO work_traditions(work_id,tradition_id,relationship_type,confidence_id,source_id) VALUES
@@ -191,9 +191,9 @@ INSERT INTO translation_sources(translation_id,edition_id,witness_id,source_type
 ;
 
 INSERT INTO textual_units(id,parent_id,witness_id,translation_id,unit_type,label,ordinal,path_key) VALUES
-(pg_temp.entity_id('unit','genesis-1-9-4q2'),NULL,pg_temp.entity_id('witness','genesis-4q2'),NULL,'passage','Genesis 1:1–9',1,'genesis.1.1-9'),
-(pg_temp.entity_id('unit','genesis-1-9-lxx'),NULL,pg_temp.entity_id('witness','genesis-lxx'),NULL,'passage','Genesis 1:1–9',1,'genesis.1.1-9'),
-(pg_temp.entity_id('unit','genesis-working-1-9'),NULL,NULL,pg_temp.entity_id('translation','genesis-working-spanish'),'passage','Genesis 1:1–9',1,'genesis.1.1-9')
+(pg_temp.entity_id('unit','genesis-1-9-4q2'),NULL,pg_temp.entity_id('witness','genesis-4q2'),NULL,'passage','Génesis 1:1–9',1,'genesis.1.1-9'),
+(pg_temp.entity_id('unit','genesis-1-9-lxx'),NULL,pg_temp.entity_id('witness','genesis-lxx'),NULL,'passage','Génesis 1:1–9',1,'genesis.1.1-9'),
+(pg_temp.entity_id('unit','genesis-working-1-9'),NULL,NULL,pg_temp.entity_id('translation','genesis-working-spanish'),'passage','Génesis 1:1–9',1,'genesis.1.1-9')
 ;
 
 INSERT INTO dating_assertions(entity_id,earliest,latest,precision,dating_method,confidence_id,notes) VALUES
@@ -218,10 +218,10 @@ INSERT INTO textual_witnesses(id,work_id,witness_type,title_or_label,language_id
 ;
 
 INSERT INTO textual_units(id,parent_id,witness_id,translation_id,unit_type,label,ordinal,path_key) VALUES
-(pg_temp.entity_id('unit','matthew-24-3-sinaiticus'),NULL,pg_temp.entity_id('witness','matthew-sinaiticus-24-3'),NULL,'verse','Matthew 24:3',3,'matthew.24.3'),
-(pg_temp.entity_id('unit','matthew-24-3-vaticanus'),NULL,pg_temp.entity_id('witness','matthew-vaticanus-24-3'),NULL,'verse','Matthew 24:3',3,'matthew.24.3'),
-(pg_temp.entity_id('unit','matthew-24-3-ephraemi'),NULL,pg_temp.entity_id('witness','matthew-ephraemi-24-3'),NULL,'verse','Matthew 24:3',3,'matthew.24.3'),
-(pg_temp.entity_id('unit','matthew-24-3-regius'),NULL,pg_temp.entity_id('witness','matthew-regius-24-3'),NULL,'verse','Matthew 24:3',3,'matthew.24.3')
+(pg_temp.entity_id('unit','matthew-24-3-sinaiticus'),NULL,pg_temp.entity_id('witness','matthew-sinaiticus-24-3'),NULL,'verse','Mateo 24:3',3,'matthew.24.3'),
+(pg_temp.entity_id('unit','matthew-24-3-vaticanus'),NULL,pg_temp.entity_id('witness','matthew-vaticanus-24-3'),NULL,'verse','Mateo 24:3',3,'matthew.24.3'),
+(pg_temp.entity_id('unit','matthew-24-3-ephraemi'),NULL,pg_temp.entity_id('witness','matthew-ephraemi-24-3'),NULL,'verse','Mateo 24:3',3,'matthew.24.3'),
+(pg_temp.entity_id('unit','matthew-24-3-regius'),NULL,pg_temp.entity_id('witness','matthew-regius-24-3'),NULL,'verse','Mateo 24:3',3,'matthew.24.3')
 ;
 
 INSERT INTO textual_variants(id,textual_unit_id,variant_type,description,status) VALUES
