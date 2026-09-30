@@ -85,6 +85,36 @@ BEGIN
     AND tuc.representation_type IN ('close_translation','readable_translation');
   IF v_reader_row_count <> 6 THEN RAISE EXCEPTION 'Reader validation: expected 6 Spanish pilot content layers, got %', v_reader_row_count; END IF;
 
+  SELECT count(*) INTO v_reader_row_count
+  FROM textual_unit_contents tuc
+  JOIN textual_units tu ON tu.id = tuc.textual_unit_id
+  JOIN entities e ON e.id = tu.id
+  WHERE e.stable_key IN ('matthew-24-3-working-spanish','matthew-24-4-working-spanish','matthew-24-5-working-spanish')
+    AND tuc.representation_type IN ('critical_text','transliteration');
+  IF v_reader_row_count <> 6 THEN RAISE EXCEPTION 'Reader validation: expected 6 Greek pilot text layers, got %', v_reader_row_count; END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM textual_unit_contents tuc
+    JOIN textual_units tu ON tu.id=tuc.textual_unit_id
+    JOIN entities e ON e.id=tu.id
+    JOIN sources s ON s.id=tuc.source_id
+    WHERE e.stable_key='matthew-24-3-working-spanish'
+      AND tuc.representation_type='critical_text'
+      AND tuc.text_content LIKE 'Καθημένου δὲ αὐτοῦ%'
+      AND s.title='The New Testament in the Original Greek'
+  ) THEN RAISE EXCEPTION 'Reader validation: Matthew 24:3 critical text layer missing'; END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM translation_sources ts
+    JOIN translations tr ON tr.id=ts.translation_id
+    JOIN entities te ON te.id=tr.id
+    JOIN editions ed ON ed.id=ts.edition_id
+    WHERE te.stable_key='matthew-working-spanish'
+      AND ed.title='The New Testament in the Original Greek'
+  ) THEN RAISE EXCEPTION 'Reader validation: Matthew working translation is not linked to its Greek edition'; END IF;
+
   IF NOT EXISTS (
     SELECT 1 FROM textual_unit_contents tuc
     JOIN textual_units tu ON tu.id=tuc.textual_unit_id
