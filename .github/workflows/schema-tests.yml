@@ -10,6 +10,7 @@ on:
       - "tests/adversarial-schema.sql"
       - "tests/reader.sql"
       - "tests/timeline.sql"
+      - "tests/canon.sql"
       - "data/seed/reader_demo.sql"
       - "data/seed/historical_corpus.sql"
       - ".github/workflows/schema-tests.yml"
@@ -51,6 +52,7 @@ jobs:
           psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0005_historical_events.sql
           psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0006_public_timeline_read.sql
           psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0007_public_relation_read.sql
+          psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f db/migrations/0008_canon_status.sql
       - name: Run schema smoke tests
         env:
           PGPASSWORD: postgres
@@ -81,3 +83,8 @@ jobs:
           PGPASSWORD: postgres
         run: |
           psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f tests/timeline.sql
+      - name: Run canon status validation
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d biblioteca_test -v ON_ERROR_STOP=1 -f tests/canon.sql
