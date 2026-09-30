@@ -46,6 +46,9 @@ jobs:
           grep -F "Mateo 24:5" /tmp/reader.html
           grep -F "Tengan cuidado de que nadie los engañe" /tmp/reader.html
           grep -F "engañarán a muchos" /tmp/reader.html
+          grep -F "Καθημένου δὲ αὐτοῦ" /tmp/reader.html
+          grep -F "Βλέπετε μή τις ὑμᾶς πλανήσῃ" /tmp/reader.html
+          grep -F "πολλοὶ γὰρ ἐλεύσονται" /tmp/reader.html
           grep -F "Codex Regius (GA 019), Matthew 24:3" /tmp/reader.html
 
       # Live Supabase-backed reader smoke test.
