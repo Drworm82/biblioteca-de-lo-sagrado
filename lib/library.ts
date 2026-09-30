@@ -326,7 +326,8 @@ export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
   const translationById=new Map(translations.map(t=>[t.id,t]));
   const editionById=new Map(editions.map(e=>[e.id,e]));
   const languageById=new Map(languages.map(x=>[x.id,x.historical_name||x.name]));
-  const scriptById=new Map(scripts.map(x=>[x.id,x.name]));
+  const scriptLabels:Record<string,string>={"Coptic script":"Escritura copta","Greek script":"Escritura griega","Hebrew script":"Escritura hebrea","Latin script":"Escritura latina"};
+  const scriptById=new Map(scripts.map(x=>[x.id,scriptLabels[x.name]||x.name]));
   const confidenceById=new Map(confidence.map(x=>[x.id,x.label]));
   const sourceById=new Map(sources.map(s=>[s.id,s]));
   const contentByUnit=new Map<string,any[]>();
