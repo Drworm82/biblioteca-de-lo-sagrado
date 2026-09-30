@@ -312,7 +312,7 @@ export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
   const unitIds=[...new Set(readerUnits.map(u=>u.id))];
   const editionIds=[...new Set(readerUnits.map(u=>u.edition_id).filter(Boolean))];
   const revisionIds=[...new Set(readerUnits.map(u=>u.translation_revision_id).filter(Boolean))];
-  const [translations,editions,contents,variants]=await Promise.all([
+  const [translations,editions,revisions,contents,variants]=await Promise.all([
     relevantTranslations.length?query<any>("translations",{select:"id,title",id:"in."+list(relevantTranslations)}):Promise.resolve([]),
     editionIds.length?query<any>("editions",{select:"id,title,publication_year",id:"in."+list(editionIds)}):Promise.resolve([]),
     revisionIds.length?query<any>("translation_revisions",{select:"id,label,revision_year",id:"in."+list(revisionIds)}):Promise.resolve([]),
