@@ -286,7 +286,7 @@ export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
     query<any>("dating_assertions",{select:"earliest,latest,precision,dating_method,confidence_id,notes",entity_id:"eq."+workId,order:"earliest.asc"}),
     query<any>("textual_units",{select:"id,witness_id,translation_id,unit_type,label,ordinal,path_key",order:"ordinal.asc.nullslast,path_key.asc"}),
     query<any>("traditions",{select:"id,name"}),
-    query<any>("languages",{select:"id,name"}),
+    query<any>("languages",{select:"id,name,historical_name"}),
     query<any>("scripts",{select:"id,name"}),
     query<any>("confidence_levels",{select:"id,label"}),
     query<any>("translation_sources",{select:"translation_id,edition_id,witness_id,source_type,notes"}),
@@ -322,7 +322,7 @@ export async function getWorkDetail(stableKey:string):Promise<WorkDetail|null>{
   const entityById=new Map(allUnitEntities.map(e=>[e.id,e.stable_key]));
   const witnessById=new Map(witnesses.map(w=>[w.id,w]));
   const translationById=new Map(translations.map(t=>[t.id,t]));
-  const languageById=new Map(languages.map(x=>[x.id,x.name]));
+  const languageById=new Map(languages.map(x=>[x.id,x.historical_name||x.name]));
   const scriptById=new Map(scripts.map(x=>[x.id,x.name]));
   const confidenceById=new Map(confidence.map(x=>[x.id,x.label]));
   const sourceById=new Map(sources.map(s=>[s.id,s]));
