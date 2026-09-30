@@ -89,7 +89,7 @@ BEGIN
   FROM textual_unit_contents tuc
   JOIN textual_units tu ON tu.id = tuc.textual_unit_id
   JOIN entities e ON e.id = tu.id
-  WHERE e.stable_key IN ('matthew-24-3-working-spanish','matthew-24-4-working-spanish','matthew-24-5-working-spanish')
+  WHERE e.stable_key IN ('matthew-24-3-westcott-hort','matthew-24-4-westcott-hort','matthew-24-5-westcott-hort')
     AND tuc.representation_type IN ('critical_text','transliteration');
   IF v_reader_row_count <> 6 THEN RAISE EXCEPTION 'Reader validation: expected 6 Greek pilot text layers, got %', v_reader_row_count; END IF;
 
@@ -99,7 +99,7 @@ BEGIN
     JOIN textual_units tu ON tu.id=tuc.textual_unit_id
     JOIN entities e ON e.id=tu.id
     JOIN sources s ON s.id=tuc.source_id
-    WHERE e.stable_key='matthew-24-3-working-spanish'
+    WHERE e.stable_key='matthew-24-3-westcott-hort'
       AND tuc.representation_type='critical_text'
       AND tuc.text_content LIKE 'Καθημένου δὲ αὐτοῦ%'
       AND s.title='The New Testament in the Original Greek'
